@@ -213,3 +213,58 @@ def test_cross_tenant_isolation_on_new_entities(client, auth, bearer):
 def test_demologin_returns_403_when_demo_auth_off(client):
     resp = client.post("/api/v1/auth/demologin")
     assert resp.status_code == 403
+
+
+def test_submit_with_browser_ai_evidence_in_payload_and_report(client, auth, bearer):
+    """Transformers.js `ai_evidence` survives the queue and supplements the run."""
+    import json as _json
+
+    from app.models.domain import QueueState, QueueTask
+
+    admin, admin_h, op_h = _setup(client, auth, bearer)
+    evidence = [
+        {"key": "institution", "value": "Federal University of Technology", "confidence": 0.71},
+        {"key": "issue_date", "value": "12 Jan 2020", "confidence": 0.66},
+    ]
+    resp = client.post(
+        "/api/v1/verifications",
+        headers=op_h,
+        data={
+            **_pdf_payload(render_transcript_pdf(TRANSCRIPT_GENUINE), "browser.pdf"),
+            "ai_evidence": _json.dumps(evidence),
+        },
+        content_type="multipart/form-data")
+    assert resp.status_code == 201, resp.get_json()
+    ver = resp.get_json()["verification"]
+
+    with client.application.app_context():
+        task = QueueTask.query.filter_by(status=QueueState.PENDING).first()
+        assert task is not None
+        assert task.payload["verification_id"] == ver["id"]
+        assert task.payload["ai_evidence"] == evidence
+
+    _require_process(client.application, ver["id"])
+    detail = client.get(f"/api/v1/verifications/{ver['id']}", headers=op_h).get_json()
+    result = detail["verification"]
+    enriched = [e for e in result["evidence"] if "Transformers.js" in e]
+    assert enriched, result.get("evidence")
+    assert any("issue_date" in e for e in enriched)
+    assert any("institution" in e for e in enriched)
+
+
+def test_submit_rejects_malformed_ai_evidence(client, auth, bearer):
+    """Garbage `ai_evidence` is ignored, never breaks the upload."""
+    admin, admin_h, op_h = _setup(client, auth, bearer)
+    resp = client.post(
+        "/api/v1/verifications",
+        headers=op_h,
+        data={
+            **_pdf_payload(render_transcript_pdf(TRANSCRIPT_GENUINE), "bad.pdf"),
+            "ai_evidence": "{{{not json",
+        },
+        content_type="multipart/form-data")
+    assert resp.status_code == 201, resp.get_json()
+    ver = resp.get_json()["verification"]
+    _require_process(client.application, ver["id"])
+    detail = client.get(f"/api/v1/verifications/{ver['id']}", headers=op_h).get_json()
+    assert detail["verification"]["status"] in ("VERIFIED", "REVIEW")

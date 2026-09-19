@@ -8,12 +8,24 @@
 
   var role = Verifo.role();
   var isStaff = role === "ADMIN" || role === "OPERATOR";
+  var isSubmitter = role === "SUBMITTER";
   var references = [];
   var verifications = [];
   var selected = null;
   var busy = false;
 
   Verifo.bootstrap().then(function () {
+    if (isSubmitter) {
+      document.getElementById("page-title").textContent = "Upload your document";
+      document.getElementById("page-subtitle").textContent =
+        "Drop your document here — an instructor will verify it and record the result.";
+      document.getElementById("staff-panel").style.display = "none";
+      document.getElementById("student-panel").style.display = "";
+      var btn = document.getElementById("student-submit");
+      btn.addEventListener("click", submitStudent);
+      return;
+    }
+
     var btn = $("submit-btn");
     btn.addEventListener("click", submit);
 
@@ -221,6 +233,43 @@
       .finally(function () { busy = false; $("decision-btn").disabled = false; });
   }
 
+  function submitStudent() {
+    if (busy) return;
+    var file = $("student-file").files[0];
+    var msg = $("student-msg");
+    if (!file) {
+      msg.innerHTML = '<p class="alert alert-error">Choose a file first.</p>';
+      return;
+    }
+    busy = true;
+    var btn = $("student-submit");
+    btn.disabled = true;
+    btn.textContent = "Analyzing in browser…";
+    Verifo.localAiEnrich(file).then(function (fields) {
+      var fd = new FormData();
+      fd.append("file", file);
+      if (fields && fields.length) fd.append("ai_evidence", JSON.stringify(fields));
+      return Verifo.upload("/verifications", fd).then(function (r) {
+        if (r.ok) {
+          msg.innerHTML = '<p class="alert alert-ok"><b>Uploaded</b> — an instructor has been notified and will verify it. Check back for the status result.</p>';
+          $("student-file").value = "";
+        } else {
+          msg.innerHTML = '<p class="alert alert-error">' + esc((r.body.error && r.body.error.message) || "Upload failed.") + "</p>";
+        }
+      }).catch(function () {
+        msg.innerHTML = '<p class="alert alert-error">Network error during upload.</p>';
+      }).finally(function () {
+        busy = false;
+        btn.disabled = false;
+        btn.textContent = "Upload for verification";
+      });
+    }).catch(function () {
+      busy = false;
+      btn.disabled = false;
+      btn.textContent = "Upload for verification";
+    });
+  }
+
   function submit() {
     var file = $("file-input").files[0];
     var msg = $("submit-msg");
@@ -230,20 +279,32 @@
     }
     busy = true;
     $("submit-btn").disabled = true;
-    var fd = new FormData();
-    fd.append("file", file);
-    var refId = $("ref-select").value;
-    if (refId) fd.append("reference_id", refId);
-    Verifo.upload("/verifications", fd).then(function (r) {
-      if (r.ok) {
-        msg.innerHTML = '<p class="alert alert-ok">Submitted — the worker is processing it now.</p>';
-        $("file-input").value = "";
-        refresh();
-      } else {
-        msg.innerHTML = '<p class="alert alert-error">' + esc((r.body.error && r.body.error.message) || "Upload failed.") + "</p>";
-      }
+    $("submit-btn").textContent = "Analyzing in browser…";
+    Verifo.localAiEnrich(file).then(function (fields) {
+      var fd = new FormData();
+      fd.append("file", file);
+      var refId = $("ref-select").value;
+      if (refId) fd.append("reference_id", refId);
+      if (fields && fields.length) fd.append("ai_evidence", JSON.stringify(fields));
+      return Verifo.upload("/verifications", fd).then(function (r) {
+        if (r.ok) {
+          msg.innerHTML = '<p class="alert alert-ok"><b>Submitted</b> — the worker is processing it now (server extraction + local enrichment).</p>';
+          $("file-input").value = "";
+          refresh();
+        } else {
+          msg.innerHTML = '<p class="alert alert-error">' + esc((r.body.error && r.body.error.message) || "Upload failed.") + "</p>";
+        }
+      }).catch(function () {
+        msg.innerHTML = '<p class="alert alert-error">Network error during upload.</p>';
+      }).finally(function () {
+        busy = false;
+        $("submit-btn").disabled = false;
+        $("submit-btn").textContent = "Submit for verification";
+      });
     }).catch(function () {
-      msg.innerHTML = '<p class="alert alert-error">Network error during upload.</p>';
-    }).finally(function () { busy = false; $("submit-btn").disabled = false; });
+      busy = false;
+      $("submit-btn").disabled = false;
+      $("submit-btn").textContent = "Submit for verification";
+    });
   }
 })();

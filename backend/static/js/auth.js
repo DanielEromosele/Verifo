@@ -26,6 +26,17 @@
   /* ---- Sign in ---- */
   var loginForm = $("login-form");
   if (loginForm) {
+    // Demo quick-fill: insert credentials into the form without submitting.
+    (function () {
+      var demoBtns = document.querySelectorAll("[data-demo-email]");
+      for (var i = 0; i < demoBtns.length; i++) {
+        demoBtns[i].addEventListener("click", function () {
+          $("email").value = this.getAttribute("data-demo-email");
+          $("password").value = this.getAttribute("data-demo-password");
+          hide("error-box");
+        });
+      }
+    })();
     loginForm.addEventListener("submit", function (e) {
       e.preventDefault();
       hide("error-box");
@@ -36,8 +47,7 @@
           var d = res.body && res.body;
           if (res.ok && d && d.token) {
             Verifo.setToken(d.token);
-            sessionStorage.setItem("verifo_mfa_pending", "1");
-            window.location.href = "/mfa";
+            window.location.href = "/dashboard";
           } else {
             fail(btn, "error-box", (res.body && res.body.error && res.body.error.message) || "Sign in failed.");
           }

@@ -21,7 +21,7 @@ from ..models.domain import (
 from .audit import AuditService
 from .storage import get_storage
 from .verification import build_engine
-from .verification.signals import FieldMatch
+from .verification.signals import ExtractedField, FieldMatch
 
 
 def build_lookup(organization_id: str):
@@ -55,14 +55,19 @@ def build_lookup(organization_id: str):
 
 
 def _engine():
-    return build_engine()
+    from flask import current_app
+
+    from ..services.ai import resolve_from_config
+
+    provider = resolve_from_config(current_app.config)
+    return build_engine(provider=provider)
 
 
 def _asset_path(org_id: str, storage_path: str) -> str:
     return str(get_storage().resolve(org_id, storage_path))
 
 
-def run_single_verification(verification_id: str):
+def run_single_verification(verification_id: str, ai_evidence=None):
     from ..models.domain import ReferenceDocument
 
     ver = Verification.query.get(verification_id)
@@ -87,6 +92,7 @@ def run_single_verification(verification_id: str):
         [asset_path], claimed, ver.organization_id,
         config=_org_config(ver.organization_id),
         database_lookup=build_lookup(ver.organization_id),
+        supplemental_fields=_ai_evidence_fields(ai_evidence),
     )
     ver.status = (
         VerificationStatus.VERIFIED if report.verdict == "verified"
@@ -166,6 +172,25 @@ def _recount_job(job_id: str):
     job.failed_count = sum(1 for i in done if i.status == ItemStatus.FAILED)
     if len(items) and len(done) == len(items):
         job.status = JobStatus.COMPLETED if job.failed_count == 0 else JobStatus.PARTIAL
+
+
+def _ai_evidence_fields(ai_evidence) -> list:
+    """Turn sanitized browser-side Transformers.js evidence into engine fields."""
+    fields = []
+    for item in (ai_evidence or []) or []:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()
+        value = str(item.get("value") or "").strip()
+        if not key or not value:
+            continue
+        try:
+            confidence = max(0.0, min(1.0, float(item.get("confidence", 0.7))))
+        except (TypeError, ValueError):
+            confidence = 0.7
+        fields.append(ExtractedField(
+            key=key, value=value, confidence=confidence, source="browser-nlp"))
+    return fields
 
 
 def _org_config(org_id: str):

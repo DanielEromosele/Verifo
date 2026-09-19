@@ -251,10 +251,52 @@ class IntegrityAnalyzerImpl(IntegrityAnalyzer):
 class DemoVerificationEngine(VerificationEngine):
     """Deterministic end-to-end pipeline orchestrating the analyzers."""
 
+    def __init__(self, ocr, comparator, database, integrity, scorer, provider=None):
+        super().__init__(ocr, comparator, database, integrity, scorer)
+        self.ai_provider = provider
+
+    @staticmethod
+    def _merge_fields(local: list, ai: list) -> list:
+        """Merge provider fields into local extraction, preferring higher confidence."""
+        merged = {f.key: f for f in local}
+        for f in ai or []:
+            if f.key.startswith("doc_") or not f.value:
+                continue
+            existing = merged.get(f.key)
+            if existing is None or f.confidence > existing.confidence:
+                merged[f.key] = f
+        # Deterministic order: keep local ordering, append new AI keys at the end.
+        return list(merged.values())
+
     def run(self, document_assets, claimed_references, organization_id, config=None,
-            *, database_lookup=None) -> VerificationReport:
+            *, database_lookup=None, supplemental_fields=None) -> VerificationReport:
         config = config or {}
         extracted = self.ocr.extract(document_assets[0])
+
+        evidence: list[str] = []
+        provider = getattr(self.ai_provider, "available", lambda: False)()
+        if provider:
+            try:
+                ai_result = self.ai_provider.analyze(document_assets, context={"org_id": organization_id})
+                merged = self._merge_fields(extracted, ai_result.fields or [])
+                evidence.append(
+                    f"AI provider '{ai_result.provider}/{ai_result.model}' supplemented "
+                    f"extraction ({len(ai_result.fields or [])} field(s); "
+                    f"{len(merged) - len(extracted)} new).")
+                extracted = merged
+            except Exception as exc:  # noqa: BLE001 - provider is optional sugar
+                evidence.append(f"AI provider unavailable this run: {exc}")
+
+        supplemental = supplemental_fields or []
+        if supplemental:
+            before = {f.key for f in extracted}
+            merged = self._merge_fields(extracted, supplemental)
+            added = [f.key for f in supplemental if f.key not in before and not f.key.startswith("doc_")]
+            evidence.append(
+                f"Browser-side Transformers.js enrichment added "
+                f"{len(added)} field(s) to extraction: {', '.join(added)}.")
+            extracted = merged
+
         ref_meta = None
         lower_refs = []
         for ref in claimed_references or []:
@@ -300,12 +342,12 @@ class DemoVerificationEngine(VerificationEngine):
             breakdown.total = min(breakdown.total, round(verified_min - 1.0, 1))
             verdict = "review"
 
-        evidence = [
+        evidence.extend([
             f"OCR text-layer captured ({len(extracted)} fields).",
             f"Reference comparison scored {breakdown.reference:.0f}%.",
             f"Library lookup scored {breakdown.database:.0f}%.",
             f"Integrity heuristics scored {breakdown.integrity:.0f}%.",
-        ]
+        ])
         return VerificationReport(
             document_id=organization_id,
             breakdown=breakdown,

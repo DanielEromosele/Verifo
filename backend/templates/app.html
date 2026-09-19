@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block body %}
+<meta name="local-js" content="{{ '1' if config.LOCAL_JS else '0' }}">
 <nav class="topbar">
   <div class="container topbar-inner">
     <a class="brand" href="/dashboard">
@@ -8,10 +9,10 @@
     </a>
     <div class="topbar-nav" id="app-nav">
       <a href="/dashboard" class="{% if section == 'dashboard' %}on{% endif %}">Dashboard</a>
-      <a href="/verify" class="{% if section == 'verify' %}on{% endif %}">Verify</a>
-      <a href="/screening" class="{% if section == 'screening' %}on{% endif %}">Screening</a>
-      <a href="/references" class="{% if section == 'references' %}on{% endif %}">References</a>
-      <a href="/settings" class="{% if section == 'settings' %}on{% endif %}">Settings</a>
+      <a href="/verify" class="{% if section == 'verify' %}on{% endif %}" id="nav-verify">Verify</a>
+      <a href="/screening" class="{% if section == 'screening' %}on{% endif %}" data-staff>Screening</a>
+      <a href="/references" class="{% if section == 'references' %}on{% endif %}" data-staff>References</a>
+      <a href="/settings" class="{% if section == 'settings' %}on{% endif %}" data-staff>Settings</a>
     </div>
     <div class="topbar-user">
       <div class="user-meta">
@@ -41,6 +42,14 @@
       var org = (me.user && me.user.organization && me.user.organization.name)
         || "Workspace";
       orgEl.textContent = org + (role ? " · " + role : "");
+    }
+    if (role !== "ADMIN" && role !== "OPERATOR") {
+      var staff = document.querySelectorAll("[data-staff]");
+      for (var i = 0; i < staff.length; i++) {
+        staff[i].parentNode.removeChild(staff[i]);
+      }
+      var v = document.getElementById("nav-verify");
+      if (v) v.textContent = "Upload";
     }
   });
   document.getElementById("sign-out").addEventListener("click", function () {

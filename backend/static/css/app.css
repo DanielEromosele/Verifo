@@ -139,6 +139,55 @@ table.v-table { width: 100%; min-width: 38rem; border-collapse: collapse; font-s
 .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 800; color: var(--text-strong); }
 .brand-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--radius-sm); background: var(--brand-600); color: #fff; }
 
+/* ---------- page scaffolding (app pages) ---------- */
+.page-header { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.page-header > div:first-child { min-width: 0; }
+.page-header .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.eyebrow { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--brand-600); }
+.page-header h1 { margin-top: 0.25rem; font-size: 1.5rem; }
+.subtitle { margin-top: 0.3125rem; font-size: 0.875rem; line-height: 1.55; color: var(--gray-500); max-width: 44rem; }
+
+/* ---------- column layouts ---------- */
+.split-2-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 1.25rem; align-items: start; }
+.split-2col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.split-2-3 > *, .split-2col > * { min-width: 0; }
+
+/* ---------- mini bar chart (dashboard volume) ---------- */
+.bars { display: flex; align-items: flex-end; gap: 0.25rem; height: 8rem; padding-top: 0.25rem; }
+.bars .bar { flex: 1 1 0; min-width: 0.25rem; height: 5%; border-radius: 4px 4px 0 0;
+  background: var(--brand-100); transition: background 0.12s; }
+.bars .bar:hover { background: var(--brand-500); }
+
+/* ---------- utility helpers (used by templates + JS) ---------- */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1 1 0%; min-width: 0; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.text-right { text-align: right; }
+.stat-value.warn { color: var(--amber-600); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .split-2-3, .split-2col { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .container { padding: 0 1rem; }
+  .topbar-inner { gap: 0.5rem; }
+  .topbar-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .topbar-nav::-webkit-scrollbar { display: none; }
+  .topbar-nav a { white-space: nowrap; }
+  .user-meta { display: none; }
+  .page-header h1 { font-size: 1.3125rem; }
+  .page-header .actions { width: 100%; }
+  .page-header .actions .btn { flex: 1 1 auto; }
+}
+
 /* ---------- auth pages ---------- */
 .auth-main { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; background: var(--gray-50); }
 .auth-card { width: 100%; max-width: 26rem; background: #fff; border: 1px solid var(--gray-200);
@@ -156,6 +205,7 @@ table.v-table { width: 100%; min-width: 38rem; border-collapse: collapse; font-s
 .auth-divider::before, .auth-divider::after { content: ""; height: 1px; flex: 1; background: var(--gray-200); }
 .auth-sso { display: grid; gap: 0.625rem; }
 .auth-sso .btn { width: 100%; }
+.auth-demo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 
 /* ---------- landing ---------- */
 .landing { background: #fff; }

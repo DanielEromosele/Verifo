@@ -9,11 +9,12 @@
 
   var role = Verifo.role();
   var isAdmin = role === "ADMIN";
+  var isStaff = role === "ADMIN" || role === "OPERATOR";
   var tab = "config";
 
   Verifo.bootstrap().then(function () {
     var tabsWrap = $("settings-tabs");
-    if (!isAdmin) {
+    if (!isStaff) {
       tabsWrap.hidden = true;
       $("tab-noaccess").hidden = false;
       return;
@@ -21,6 +22,13 @@
     tabsWrap.querySelectorAll(".tab-pill").forEach(function (b) {
       b.addEventListener("click", function () { switchTab(b.getAttribute("data-tab")); });
     });
+    if (!isAdmin) {
+      tabsWrap.querySelectorAll(".tab-pill").forEach(function (b) {
+        b.hidden = b.getAttribute("data-tab") !== "team";
+      });
+      switchTab("team");
+      return;
+    }
     loadConfig();
     switchTab("config");
   }).catch(function () {});
@@ -220,8 +228,9 @@
   function loadTeam() {
     Verifo.api("/users").then(function (r) {
       var users = r.ok && r.body ? r.body.users || [] : [];
-      var html = '<div class="card"><div class="card-header"><div><h2>Team members</h2></div>' +
-        '<button type="button" class="btn btn-primary" id="invite-toggle" style="font-size:0.8125rem">Add member</button></div>' +
+      var html = '<div class="card"><div class="card-header"><div><h2>Team members</h2>' +
+        (!isAdmin ? '<p class="text-xs text-muted">Read-only for operators.</p>' : "") + "</div>" +
+        (isAdmin ? '<button type="button" class="btn btn-primary" id="invite-toggle" style="font-size:0.8125rem">Add member</button>' : "") + "</div>" +
         '<div id="invite-form" hidden style="border-bottom:1px solid var(--gray-100);background:var(--gray-50);padding:1rem 1.25rem">' +
         '<div class="split-2col" style="gap:0.625rem">' +
         '<input class="input" id="inv-name" placeholder="Full name">' +
@@ -230,27 +239,32 @@
         '<select class="input" id="inv-role"><option value="OPERATOR">OPERATOR</option><option value="SUBMITTER">SUBMITTER</option><option value="ADMIN">ADMIN</option></select></div>' +
         '<div id="inv-msg" style="margin-top:0.5rem"></div>' +
         '<button type="button" class="btn btn-primary" id="invite-send" style="font-size:0.8125rem;margin-top:0.5rem">Invite</button></div>';
-      html += '<div class="table-wrap"><table class="v-table"><thead><tr><th>Member</th><th>Email</th><th>Role</th><th>Status</th><th class="text-right">Actions</th></tr></thead><tbody>';
+      html += '<div class="table-wrap"><table class="v-table"><thead><tr><th>Member</th><th>Email</th><th>Role</th><th>Status</th>' +
+        (isAdmin ? '<th class="text-right">Actions</th>' : "") + "</tr></thead><tbody>";
       users.forEach(function (m) {
         html += "<tr><td style=\"font-weight:500;color:var(--gray-700)\">" + esc((m.user && m.user.full_name) || "—") + "</td>" +
           '<td class="text-muted">' + esc((m.user && m.user.email) || "") + "</td>" +
           "<td>" + Verifo.statusBadge(m.role) + "</td>" +
           "<td>" + Verifo.statusBadge(m.status) + "</td>" +
-          '<td class="text-right"><button type="button" class="btn btn-ghost btn-sm" data-id="' + esc(m.user && m.user.id) + '" ' +
-          'data-status="' + (m.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE") + '">' +
-          (m.status === "ACTIVE" ? "Suspend" : "Activate") + "</button></td></tr>";
+          (isAdmin
+            ? '<td class="text-right"><button type="button" class="btn btn-ghost btn-sm" data-id="' + esc(m.user && m.user.id) + '" ' +
+              'data-status="' + (m.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE") + '">' +
+              (m.status === "ACTIVE" ? "Suspend" : "Activate") + "</button></td>"
+            : "");
       });
       html += "</tbody></table></div></div>";
       $("tab-team").innerHTML = html;
-      $("invite-toggle").addEventListener("click", function () { $("invite-form").hidden = !$("invite-form").hidden; });
-      $("invite-send").addEventListener("click", sendInvite);
-      $("tab-team").querySelectorAll("button[data-id]").forEach(function (b) {
-        b.addEventListener("click", function () {
-          Verifo.api("/admin/users/" + b.getAttribute("data-id") + "/status", {
-            method: "POST", body: { status: b.getAttribute("data-status") },
-          }).then(function () { loadTeam(); });
+      if (isAdmin) {
+        $("invite-toggle").addEventListener("click", function () { $("invite-form").hidden = !$("invite-form").hidden; });
+        $("invite-send").addEventListener("click", sendInvite);
+        $("tab-team").querySelectorAll("button[data-id]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            Verifo.api("/admin/users/" + b.getAttribute("data-id") + "/status", {
+              method: "POST", body: { status: b.getAttribute("data-status") },
+            }).then(function () { loadTeam(); });
+          });
         });
-      });
+      }
     });
   }
 

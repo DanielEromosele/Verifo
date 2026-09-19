@@ -4,10 +4,16 @@ Upload a submitted document → queue for processing → deterministic pipeline
 produces score/breakdown/conclusion/issues → operator finalizes a decision
 that is audited. A comment is mandatory for REJECTED or when overriding a
 high-score verdict.
+
+Uploads may optionally carry `ai_evidence` — structured fields extracted
+client-side by browser Transformers.js. The worker merges them into the
+field extraction (best-effort, evidence only; never a verdict).
 """
+import json
+
 from flask import Blueprint, request
 
-from ...auth import current_user_id, require_org, roles_required
+from ...auth import current_role, current_user_id, require_org, roles_required
 from ...extensions import db
 from ...models.common import RoleCode
 from ...models.domain import QueueTask, ReferenceDocument, Verification, VerificationStatus
@@ -20,12 +26,40 @@ verifications_bp = Blueprint("verifications", __name__)
 ROLES = (RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
 
 
+def _parse_ai_evidence(raw: str | None) -> list | None:
+    """Leniently accept browser-side Transformers.js `ai_evidence` JSON."""
+    if not raw or not raw.strip():
+        return None
+    try:
+        items = json.loads(raw)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not isinstance(items, list):
+        return None
+    out = []
+    for item in items[:200]:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()[:64]
+        value = str(item.get("value") or "").strip()[:200]
+        if not key or not value:
+            continue
+        try:
+            conf = max(0.0, min(1.0, float(item.get("confidence", 0.7))))
+        except (TypeError, ValueError):
+            conf = 0.7
+        out.append({"key": key, "value": value, "confidence": conf})
+    return out if out else None
+
+
 @verifications_bp.get("")
-@roles_required(*ROLES)
+@roles_required(RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
 def list_verifications():
     org_id = require_org()
     status = request.args.get("status")
     q = Verification.query.filter_by(organization_id=org_id)
+    if current_role() == RoleCode.SUBMITTER.value:
+        q = q.filter(Verification.created_by == current_user_id())
     if status and status in {s.value for s in VerificationStatus}:
         q = q.filter_by(status=status)
     rows = q.order_by(Verification.created_at.desc()).limit(200).all()
@@ -33,7 +67,7 @@ def list_verifications():
 
 
 @verifications_bp.post("")
-@roles_required(*ROLES)
+@roles_required(RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
 def submit_verification():
     org_id = require_org()
     file = request.files.get("file")
@@ -75,10 +109,14 @@ def submit_verification():
     )
     db.session.add(ver)
     db.session.flush()
+    payload = {"verification_id": ver.id}
+    ai_list = _parse_ai_evidence(request.form.get("ai_evidence"))
+    if ai_list:
+        payload["ai_evidence"] = ai_list
     QueueTask.enqueue(
         organization_id=org_id,
         kind="VERIFY_DOCUMENT",
-        payload={"verification_id": ver.id},
+        payload=payload,
     )
     AuditService.commit(organization_id=org_id, action="VERIFICATION_SUBMITTED",
                         entity_type="Verification", entity_id=ver.id,

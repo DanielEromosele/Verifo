@@ -27,6 +27,17 @@ def _issue_token(user: User, membership: Membership) -> str:
     return issue_app_token(user.id, membership.organization_id, role)
 
 
+def _set_session_cookie(payload: dict, token: str):
+    from flask import jsonify
+    from flask_jwt_extended import set_access_cookies
+
+    body = {"success": True}
+    body.update(payload)
+    resp = jsonify(body)
+    set_access_cookies(resp, token)
+    return resp
+
+
 def _default_membership(memberships):
     """Pick the session organization deterministically when a user belongs to several.
 
@@ -91,16 +102,15 @@ def register():
     )
     db.session.commit()
 
-    return (
-        api_ok(
-            {
-                "token": _issue_token(user, membership),
-                "user": user.to_dict(),
-                "membership": membership.to_dict(),
-            }
-        ),
-        201,
-    )
+    token = _issue_token(user, membership)
+    return _set_session_cookie(
+        {
+            "token": token,
+            "user": user.to_dict(),
+            "membership": membership.to_dict(),
+        },
+        token,
+    ), 201
 
 
 @auth_bp.post("/login")
@@ -147,6 +157,7 @@ def login():
     if active:
         response["token"] = _issue_token(user, active)
         response["active_membership"] = active.to_dict()
+        return _set_session_cookie(response, response["token"]), 200
     return api_ok(response), 200
 
 
@@ -221,17 +232,16 @@ def demologin():
     user_detail = user.to_dict()
     user_detail["organization"] = org.to_dict()
     user_detail["role"] = membership.role.value if membership.role else None
-    return (
-        api_ok(
-            {
-                "token": _issue_token(user, membership),
-                "user": user_detail,
-                "membership": membership.to_dict(),
-                "demo": True,
-            }
-        ),
-        200,
-    )
+    token = _issue_token(user, membership)
+    return _set_session_cookie(
+        {
+            "token": token,
+            "user": user_detail,
+            "membership": membership.to_dict(),
+            "demo": True,
+        },
+        token,
+    ), 200
 
 
 @auth_bp.post("/switch-org")
@@ -248,4 +258,5 @@ def switch_org():
     )
     if not membership:
         return api_error("FORBIDDEN", "You are not a member of that organization.", status=403)
-    return api_ok({"token": _issue_token(user, membership), "membership": membership.to_dict()}), 200
+    token = _issue_token(user, membership)
+    return _set_session_cookie({"token": token, "membership": membership.to_dict()}, token), 200

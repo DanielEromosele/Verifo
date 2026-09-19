@@ -35,6 +35,9 @@ class BaseConfig:
     JWT_IDENTITY_CLAIM = "sub"
     JWT_ERROR_MESSAGE_KEY = "message"
     TOKEN_ISSUER = JWT_ISSUER
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_SECURE = False
 
     # --- Upload policy ---
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB request cap
@@ -70,10 +73,18 @@ class BaseConfig:
     # "local" is the deterministic in-house engine (text-layer + structural analysis).
     # "gemini" / "groq" are reserved provider slots that can be configured but are
     # NOT required by the MVP and are never claimed to be active unless configured.
-    AI_PROVIDER = os.environ.get("AI_PROVIDER", "local").strip().lower()
+    # Browser-side Transformers.js enrichment rides along with uploads as
+    # `ai_evidence` and needs no server-side provider config.
+    AI_PROVIDER = os.environ.get("AI_PROVIDER", "auto").strip().lower()
     AI_MODEL = os.environ.get("AI_MODEL", "")
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+
+    # Browser-side enrichment switch (verify page, authenticated users only).
+    # LOCAL_JS=0 (default) -> browser enrichment OFF: no Transformers.js loaded
+    # and no ai_evidence sent (server pipeline only). LOCAL_JS=1 -> load pdf.js
+    # + Transformers.js and run on-device NER. Evidence only, never a verdict.
+    LOCAL_JS = os.environ.get("LOCAL_JS", "0") == "1"
 
     # --- Demo mode (dev-only convenience) ---
     # When enabled, /api/v1/auth/demologin issues an admin token without

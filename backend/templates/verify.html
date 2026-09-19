@@ -5,10 +5,25 @@
 <div class="page-header">
   <div>
     <p class="eyebrow">Single verification</p>
-    <h1>Verify a document</h1>
-    <p class="subtitle">Upload a submission and compare it against your trusted reference library.</p>
+    <h1 id="page-title">Verify a document</h1>
+    <p class="subtitle" id="page-subtitle">Upload a submission and compare it against your trusted reference library.</p>
   </div>
 </div>
+
+<div id="student-panel" class="card" style="display:none">
+  <div class="card-body">
+    <h2 style="font-size:0.9375rem">Upload your document</h2>
+    <p class="text-sm text-muted" style="margin-top:0.375rem">An instructor will verify it against the trusted reference library and record the result.</p>
+    <div style="margin-top:1rem">
+      <label class="label" for="student-file">Document file</label>
+      <input class="input" type="file" id="student-file" accept=".pdf,.png,.jpg,.jpeg">
+    </div>
+    <div id="student-msg"></div>
+    <button type="button" class="btn btn-primary" id="student-submit" style="margin-top:1rem">Upload for verification</button>
+  </div>
+</div>
+
+<div id="staff-panel">
 
 <div class="card">
   <div class="card-body">
@@ -38,5 +53,7 @@
   </div>
   <div id="detail-panel"></div>
 </div>
+
+</div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/verify.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/local-ai.js"></script><script src="/static/js/verify.js"></script>{% endblock %}

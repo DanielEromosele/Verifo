@@ -1,9 +1,33 @@
 """Web blueprint: server-rendered HTML pages (Flask + Jinja2 + vanilla JS/CSS)."""
 from datetime import datetime
+from functools import wraps
 
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect, render_template, url_for
+from flask_jwt_extended import verify_jwt_in_request
+
+from ..auth import current_role
+from ..models.common import RoleCode
 
 web_bp = Blueprint("web", __name__)
+
+
+def page_access(*roles: str):
+    """Gate a workspace page by JWT role; redirect non-members to safety."""
+
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            try:
+                verify_jwt_in_request()
+            except Exception:
+                return redirect(url_for("web.signin"))
+            if current_role() not in roles:
+                return redirect(url_for("web.dashboard"))
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @web_bp.app_context_processor
@@ -73,25 +97,30 @@ def terms():
 
 
 @web_bp.get("/dashboard")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
 def dashboard():
     return page("dashboard.html")
 
 
 @web_bp.get("/verify")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
 def verify():
     return page("verify.html")
 
 
 @web_bp.get("/screening")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
 def screening():
     return page("screening.html")
 
 
 @web_bp.get("/references")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
 def references():
     return page("references.html")
 
 
 @web_bp.get("/settings")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
 def settings():
     return page("settings.html")
