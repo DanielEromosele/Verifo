@@ -56,7 +56,7 @@ def submit_verification():
         ref = ReferenceDocument.query.filter_by(
             id=reference_id, organization_id=org_id).first()
         if not ref:
-            return api_error("NOT_FOUND", "Reference document not found.")
+            return api_error("NOT_FOUND", "Reference document not found.", status=404)
         document_type_id = document_type_id or ref.document_type_id
 
     storage = get_storage()
@@ -94,7 +94,7 @@ def get_verification(verification_id):
     org_id = require_org()
     row = Verification.query.filter_by(id=verification_id, organization_id=org_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Verification not found.")
+        return api_error("NOT_FOUND", "Verification not found.", status=404)
     data = row.to_dict(include_private=True)
     data["download_token"] = sign_download_token(org_id, row.storage_path)
     if row.reference_id:
@@ -109,7 +109,7 @@ def decide_verification(verification_id):
     org_id = require_org()
     row = Verification.query.filter_by(id=verification_id, organization_id=org_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Verification not found.")
+        return api_error("NOT_FOUND", "Verification not found.", status=404)
     if row.status not in (VerificationStatus.REVIEW, VerificationStatus.VERIFIED):
         return api_error("INVALID_STATE", "Only reviewable results can be decided.")
 

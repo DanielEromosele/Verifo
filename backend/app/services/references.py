@@ -62,8 +62,6 @@ def process_reference(organization_id, *, filename: str, data: bytes,
         "extracted_fields": [
             {"key": f.key, "value": f.value, "confidence": f.confidence} for f in fields
         ],
-        "baseline": {k: v for k, v in baseline.items() if k in (
-            "producer", "page_count", "text_chars")},
         "status": ReferenceStatus.ACTIVE,
     }
 

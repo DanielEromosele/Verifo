@@ -241,22 +241,40 @@ class QueueTask(db.Model, PkUuidMixin, TimestampsMixin):
         return task
 
     @classmethod
-    def claim(cls, *, worker: str, lease_seconds: int = 120):
-        """Claim the next eligible task ordered FIFO. Safe under SQLite/Postgres."""
-        now = utcnow()
-        task = cls.query.filter(
-            cls.status.in_([QueueState.PENDING, QueueState.RETRYING]),
-            db.or_(cls.claimed_until.is_(None), cls.claimed_until < now),
-            db.or_(cls.run_after.is_(None), cls.run_after <= now),
-        ).order_by(cls.created_at.asc()).with_for_update().first()
-        if not task:
-            return None
-        from datetime import timedelta
+    def _aware(cls, dt):
+        from datetime import timezone
 
-        task.status = QueueState.CLAIMED
-        task.claimed_until = utcnow() + timedelta(seconds=lease_seconds)
-        task.attempts += 1
-        return task
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    @classmethod
+    def claim(cls, *, worker: str, lease_seconds: int = 120):
+        """Claim the next eligible task ordered FIFO.
+
+        Datetime comparisons happen in Python so the guard behaves the same on
+        SQLite (naive round-trip) and Postgres (aware values).
+        """
+        now = utcnow()
+        candidates = cls.query.filter(
+            cls.status.in_([QueueState.PENDING, QueueState.RETRYING]),
+        ).order_by(cls.created_at.asc(), cls.id.asc()).all()
+        for task in candidates:
+            claimed_until = cls._aware(task.claimed_until)
+            run_after = cls._aware(task.run_after)
+            if claimed_until and claimed_until > now:
+                continue
+            if run_after and run_after > now:
+                continue
+            from datetime import timedelta
+
+            task.status = QueueState.CLAIMED
+            task.claimed_until = now + timedelta(seconds=lease_seconds)
+            task.attempts += 1
+            return task
+        return None
 
     @classmethod
     def claim_batch(cls, *, worker: str, limit: int, lease_seconds: int = 120):

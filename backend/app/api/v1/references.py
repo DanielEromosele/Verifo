@@ -72,7 +72,7 @@ def upload_reference():
         doc_type = DocumentType.query.filter_by(
             id=document_type_id, organization_id=org_id).first()
         if not doc_type:
-            return api_error("NOT_FOUND", "Document type not found.")
+            return api_error("NOT_FOUND", "Document type not found.", status=404)
         code = doc_type.code
     else:
         code = "REF"
@@ -101,7 +101,7 @@ def get_reference(reference_id):
     org_id = require_org()
     row = ReferenceDocument.query.filter_by(id=reference_id, organization_id=org_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Reference not found.")
+        return api_error("NOT_FOUND", "Reference not found.", status=404)
     data = _ref_public(row)
     data["fields"] = row.extracted_fields or []
     data["baseline"] = (row.fingerprint or {}).get("baseline", {})
@@ -114,7 +114,7 @@ def archive_reference(reference_id):
     org_id = require_org()
     row = ReferenceDocument.query.filter_by(id=reference_id, organization_id=org_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Reference not found.")
+        return api_error("NOT_FOUND", "Reference not found.", status=404)
     status = request.get_json(silent=True) or {}
     if (status.get("status") or "").upper() in {s.value for s in ReferenceStatus}:
         row.status = ReferenceStatus(status["status"].upper())

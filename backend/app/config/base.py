@@ -78,8 +78,8 @@ class BaseConfig:
     # --- Demo mode (dev-only convenience) ---
     # When enabled, /api/v1/auth/demologin issues an admin token without
     # credentials so the demo is usable out of the box. Never enabled in
-    # production; disabled in testing so the test suite enforces real auth.
-    DEMO_AUTH_ENABLED = os.environ.get("VERIFO_DEMO_AUTH", "1") == "1"
+    # production; disabled by default so deployments require real auth.
+    DEMO_AUTH_ENABLED = os.environ.get("VERIFO_DEMO_AUTH") == "1"
 
     @staticmethod
     def default_verification_config() -> dict:

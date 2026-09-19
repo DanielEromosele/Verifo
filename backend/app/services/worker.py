@@ -92,7 +92,9 @@ def run_single_verification(verification_id: str):
         VerificationStatus.VERIFIED if report.verdict == "verified"
         else VerificationStatus.REVIEW)
     ver.score = report.breakdown.total
-    ver.breakdown = report.breakdown.__dict__
+    bd = dict(report.breakdown.__dict__)
+    bd["findings"] = [f.__dict__ for f in report.breakdown.findings]
+    ver.breakdown = bd
     ver.breakdown["total"] = report.breakdown.total
     ver.conclusion = _field_conclusion(report.breakdown.findings)
     ver.issues = [f.__dict__ for f in report.breakdown.findings

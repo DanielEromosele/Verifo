@@ -21,7 +21,7 @@ def get_settings():
     org_id = require_org()
     org = Organization.query.get(org_id)
     if not org:
-        return api_error("NOT_FOUND", "Organization not found.")
+        return api_error("NOT_FOUND", "Organization not found.", status=404)
     return api_ok({"settings": org.verification_config or {}}), 200
 
 
@@ -31,7 +31,7 @@ def update_settings():
     org_id = require_org()
     org = Organization.query.get(org_id)
     if not org:
-        return api_error("NOT_FOUND", "Organization not found.")
+        return api_error("NOT_FOUND", "Organization not found.", status=404)
 
     data = request.get_json(silent=True) or {}
     new_config = dict(org.verification_config or {})
@@ -132,7 +132,7 @@ def set_user_status(user_id):
     membership = Membership.query.filter_by(
         organization_id=org_id, user_id=user_id).first()
     if not membership:
-        return api_error("NOT_FOUND", "User is not a member of this organization.")
+        return api_error("NOT_FOUND", "User is not a member of this organization.", status=404)
     membership.status = StatusCode(status)
     AuditService.commit(organization_id=org_id, action="MEMBER_STATUS_CHANGED",
                         entity_type="Membership", summary=f"Member set to {status}.",

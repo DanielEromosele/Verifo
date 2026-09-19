@@ -49,7 +49,7 @@ def revoke_key(key_id):
     org_id = require_org()
     key = APIKey.query.filter_by(id=key_id, organization_id=org_id).first()
     if not key:
-        return api_error("NOT_FOUND", "API key not found.")
+        return api_error("NOT_FOUND", "API key not found.", status=404)
     db.session.delete(key)
     AuditService.commit(organization_id=org_id, action="API_KEY_REVOKED",
                         entity_type="APIKey", summary=f"API key '{key.name}' revoked.")

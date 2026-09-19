@@ -20,8 +20,10 @@ def register_cli(app):
     @app.cli.command("seed-demo")
     def seed_demo():
         """Create the demo organization, users, document types, and fixtures."""
+        from app.extensions import db
         from .seed_demo import seed_demo
 
+        db.create_all()
         seed_demo()
         click.echo("Demo seed complete.")
 

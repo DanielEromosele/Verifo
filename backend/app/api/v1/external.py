@@ -60,7 +60,7 @@ def submit():
             organization_id=org_id, ref_code=ref_code,
             status=StatusCode.ACTIVE.value).first()
         if not ref:
-            return api_error("NOT_FOUND", "reference_code not found in your library.")
+            return api_error("NOT_FOUND", "reference_code not found in your library.", status=404)
 
     path = get_storage().save(org_id, "api", file.filename, data)
     ver = Verification(
@@ -99,5 +99,5 @@ def get_own(verification_id):
     row = Verification.query.filter_by(
         id=verification_id, organization_id=key.organization_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Verification not found.")
+        return api_error("NOT_FOUND", "Verification not found.", status=404)
     return api_ok({"verification": row.to_dict(include_private=True)}), 200

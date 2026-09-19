@@ -58,5 +58,5 @@ def get_document_type(doc_type_id):
     org_id = require_org()
     row = DocumentType.query.filter_by(id=doc_type_id, organization_id=org_id).first()
     if not row:
-        return api_error("NOT_FOUND", "Document type not found.")
+        return api_error("NOT_FOUND", "Document type not found.", status=404)
     return api_ok({"document_type": row.to_dict()}), 200

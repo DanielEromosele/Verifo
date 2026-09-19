@@ -48,7 +48,7 @@ def create_job():
         ref = ReferenceDocument.query.filter_by(
             id=reference_id, organization_id=org_id).first()
         if not ref:
-            return api_error("NOT_FOUND", "Reference document not found.")
+            return api_error("NOT_FOUND", "Reference document not found.", status=404)
 
     storage = get_storage()
     files = request.files.getlist("files")
@@ -132,7 +132,7 @@ def get_job(job_id):
     org_id = require_org()
     job = ScreeningJob.query.filter_by(id=job_id, organization_id=org_id).first()
     if not job:
-        return api_error("NOT_FOUND", "Screening job not found.")
+        return api_error("NOT_FOUND", "Screening job not found.", status=404)
     return api_ok({"job": job.to_dict()}), 200
 
 
@@ -142,7 +142,7 @@ def list_job_items(job_id):
     org_id = require_org()
     job = ScreeningJob.query.filter_by(id=job_id, organization_id=org_id).first()
     if not job:
-        return api_error("NOT_FOUND", "Screening job not found.")
+        return api_error("NOT_FOUND", "Screening job not found.", status=404)
     status = request.args.get("status")
     q = ScreeningItem.query.filter_by(job_id=job_id)
     if status and status in {s.value for s in ItemStatus}:
@@ -157,7 +157,7 @@ def retry_failed_items(job_id):
     org_id = require_org()
     job = ScreeningJob.query.filter_by(id=job_id, organization_id=org_id).first()
     if not job:
-        return api_error("NOT_FOUND", "Screening job not found.")
+        return api_error("NOT_FOUND", "Screening job not found.", status=404)
     failed = ScreeningItem.query.filter_by(
         job_id=job_id, organization_id=org_id, status=ItemStatus.FAILED).all()
     for item in failed:

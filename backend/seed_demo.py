@@ -267,6 +267,8 @@ def run_seed(sample=None):
     want_sample = sample if sample is not None else sample_mode()
     from app.extensions import db
 
+    db.create_all()
+
     log.info("SEED_SAMPLE=%s -> running %s",
              "1" if want_sample else "0",
              "full demo fixtures" if want_sample else "bootstrap only")

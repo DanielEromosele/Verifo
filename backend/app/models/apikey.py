@@ -16,6 +16,15 @@ def _hash_key(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _aware(dt) -> datetime | None:
+    """SQLite round-trips tz-aware datetimes as naive; normalize before comparing."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 class APIKey(db.Model, PkUuidMixin, TimestampsMixin):
     __tablename__ = "api_keys"
 
@@ -48,7 +57,8 @@ class APIKey(db.Model, PkUuidMixin, TimestampsMixin):
         key = cls.query.filter(db.func.lower(cls.key_digest) == digest).first()
         if not key or key.status != StatusCode.ACTIVE:
             return None
-        if key.expires_at and key.expires_at < utcnow():
+        expires = _aware(key.expires_at)
+        if expires and expires < utcnow():
             return None
         key.last_used_at = utcnow()
         return key

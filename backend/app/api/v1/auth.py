@@ -27,6 +27,24 @@ def _issue_token(user: User, membership: Membership) -> str:
     return issue_app_token(user.id, membership.organization_id, role)
 
 
+def _default_membership(memberships):
+    """Pick the session organization deterministically when a user belongs to several.
+
+    Prefers orgs that behave like the built-in demo, then any org the user
+    administers, so single- and multi-tenant logins both yield a usable token.
+    """
+    if not memberships:
+        return None
+    for pref in (
+        lambda m: getattr(m.organization, "slug", None) == "demo",
+        lambda m: m.role in (RoleCode.ADMIN, None),
+    ):
+        chosen = next((m for m in memberships if pref(m)), None)
+        if chosen is not None:
+            return chosen
+    return memberships[0]
+
+
 @auth_bp.post("/register")
 def register():
     data = request.get_json(silent=True) or {}
@@ -109,7 +127,7 @@ def login():
             "NO_MEMBERSHIP", "This account has no active organization membership.", status=403
         )
 
-    active = memberships[0] if len(memberships) == 1 else None
+    active = _default_membership(memberships)
     user.touch_login()
     AuditService.commit(
         organization_id=active.organization_id if active else None,
