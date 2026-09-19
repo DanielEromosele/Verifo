@@ -1,9 +1,9 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../utils/cn";
 
 const NAV = [
-  { to: "/", label: "Dashboard", end: true },
+  { to: "/dashboard", label: "Dashboard", end: true },
 ];
 
 function Brand() {
@@ -30,8 +30,7 @@ function Brand() {
 }
 
 export default function Shell() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen">
@@ -59,15 +58,6 @@ export default function Shell() {
           <p className="truncate text-[11px] text-ink-300">
             {user?.organization?.name || "Organization"} · {user?.role || "Member"}
           </p>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
-            className="mt-3 w-full rounded-lg border border-ink-700 px-3 py-1.5 text-xs font-medium text-ink-300 transition hover:bg-ink-800 hover:text-white"
-          >
-            Sign out
-          </button>
         </div>
       </aside>
 

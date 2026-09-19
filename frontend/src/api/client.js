@@ -14,7 +14,7 @@ export async function api(path, { method = "GET", body, headers = {}, params } =
     ? "?" + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== "")).toString()
     : "";
   const token = getToken();
-  const res = await fetch(`/api${path}${query}`, {
+  const res = await fetch(`/api/v1${path}${query}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +49,7 @@ export async function upload(path, { file, extra } = {}) {
   if (extra) {
     for (const [k, v] of Object.entries(extra)) form.append(k, String(v));
   }
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`/api/v1${path}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${getToken()}` },
     body: form,

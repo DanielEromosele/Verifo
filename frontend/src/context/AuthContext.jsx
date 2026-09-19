@@ -9,7 +9,17 @@ export function AuthProvider({ children }) {
 
   const refreshUser = useCallback(async () => {
     if (!getToken()) {
-      setLoading(false);
+      // Demo mode: no credentials needed. The backend issues an admin
+      // token only while DEMO_AUTH_ENABLED (dev), so this stays a demo helper.
+      try {
+        const data = await api("/auth/demologin", { method: "POST" });
+        setToken(data.token);
+        setUser(data.user);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     try {
@@ -27,31 +37,9 @@ export function AuthProvider({ children }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = useCallback(async (credentials) => {
-    const data = await api("/auth/login", { method: "POST", body: credentials });
-    if (!data.token) {
-      throw new Error("Select an organization (multi-org support requires token provisioning).");
-    }
-    setToken(data.token);
-    await refreshUser();
-    return data;
-  }, [refreshUser]);
-
-  const register = useCallback(async (payload) => {
-    const data = await api("/auth/register", { method: "POST", body: payload });
-    setToken(data.token);
-    setUser(data.user);
-    return data;
-  }, []);
-
-  const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-  }, []);
-
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refreshUser }),
-    [user, loading, login, register, logout, refreshUser]
+    () => ({ user, loading, refreshUser }),
+    [user, loading, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
