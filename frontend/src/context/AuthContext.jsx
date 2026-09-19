@@ -9,17 +9,7 @@ export function AuthProvider({ children }) {
 
   const refreshUser = useCallback(async () => {
     if (!getToken()) {
-      // Demo mode: no credentials needed. The backend issues an admin
-      // token only while DEMO_AUTH_ENABLED (dev), so this stays a demo helper.
-      try {
-        const data = await api("/auth/demologin", { method: "POST" });
-        setToken(data.token);
-        setUser(data.user);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
       return;
     }
     try {
@@ -33,13 +23,38 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const login = useCallback(async (email, password) => {
+    const data = await api("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    setToken(data.token);
+    await refreshUser();
+    return data.user;
+  }, [refreshUser]);
+
+  const register = useCallback(async (payload) => {
+    const data = await api("/auth/register", {
+      method: "POST",
+      body: payload,
+    });
+    setToken(data.token);
+    await refreshUser();
+    return data.user;
+  }, [refreshUser]);
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
 
   const value = useMemo(
-    () => ({ user, loading, refreshUser }),
-    [user, loading, refreshUser]
+    () => ({ user, loading, login, register, logout, refreshUser }),
+    [user, loading, login, register, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
