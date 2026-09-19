@@ -43,3 +43,7 @@ Thumbs.db
 # --- Misc ---
 *.zip
 !docs/**/*.zip
+
+# --- Research (temporary clones, never committed) ---
+research/
+RESEARCH_CLONES/
