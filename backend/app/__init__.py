@@ -1,16 +1,18 @@
 """Application factory for the Verifo backend."""
 import os
 
-from flask import Flask, jsonify
+from flask import Flask
 
 
-def create_app(config_name: str = None) -> Flask:
-    from .config import CONFIG_MAP, BaseConfig
+def create_app(config_name: str = None, config_overrides: dict | None = None) -> Flask:
+    from .config import CONFIG_MAP
     from .extensions import cors, db, jwt, limiter, migrate
 
     app = Flask(__name__)
     env = config_name or os.environ.get("VERIFO_ENV", "development")
-    app.config.from_object(CONFIG_MAP.get(env, BaseConfig))
+    app.config.from_object(CONFIG_MAP.get(env, CONFIG_MAP["development"]))
+    if config_overrides:
+        app.config.update(config_overrides)
 
     # --- extensions ---
     db.init_app(app)
@@ -19,10 +21,11 @@ def create_app(config_name: str = None) -> Flask:
     limiter.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}})
 
-    # --- blueprints ---
-    from .routes import api_bp
+    # --- middleware (request id, security headers, error envelope) ---
+    from .middleware import register_error_handlers, register_request_context
 
-    app.register_blueprint(api_bp, url_prefix="/api")
+    register_request_context(app)
+    register_error_handlers(app)
 
     # --- JWT identity ---
     from .models.user import User
@@ -38,51 +41,22 @@ def create_app(config_name: str = None) -> Flask:
             return None
         return User.query.get(uid)
 
-    # --- error handling ---
-    def _error(status, message, code=None):
-        payload = {"error": {"message": message}}
-        if code:
-            payload["error"]["code"] = code
-        return jsonify(payload), status
+    # --- blueprints (versioned API under /api/v1) ---
+    from .api.v1 import api_v1_bp
 
-    @app.errorhandler(400)
-    def bad_request(exc):
-        return _error(400, exc.description or "Bad request.", "BAD_REQUEST")
+    app.register_blueprint(api_v1_bp, url_prefix="/api/v1")
 
-    @app.errorhandler(403)
-    def forbidden(exc):
-        return _error(403, "You do not have permission to perform this action.", "FORBIDDEN")
+    # --- CLI: run the self-built queue worker ---
+    from .cli import register_cli
 
-    @app.errorhandler(404)
-    def not_found(_):
-        return _error(404, "Resource not found.", "NOT_FOUND")
+    register_cli(app)
 
-    @app.errorhandler(413)
-    def too_large(_):
-        return _error(413, "Request payload too large.", "PAYLOAD_TOO_LARGE")
-
-    @app.errorhandler(429)
-    def rate_limited(exc):
-        return _error(429, "Rate limit exceeded. Please slow down.", "RATE_LIMITED")
-
-    @app.errorhandler(500)
-    def server_error(exc):
-        app.logger.exception("Unhandled error: %s", exc)
-        return _error(500, "Internal server error.", "INTERNAL")
-
-    from .rbac import AuthorizationError
-    from .services.security import UploadValidationError
-
-    @app.errorhandler(AuthorizationError)
-    def _authz(exc):
-        return _error(403, str(exc), "FORBIDDEN")
-
-    @app.errorhandler(UploadValidationError)
-    def _upload(exc):
-        return _error(400, str(exc), "UPLOAD_INVALID")
-
-    @app.errorhandler(ValueError)
-    def _value(exc):
-        return _error(400, str(exc), "INVALID_INPUT")
+    @app.get("/")
+    def root():
+        return {
+            "service": "Verifo",
+            "api_version": "v1",
+            "docs": "/docs",
+        }
 
     return app

@@ -1,8 +1,7 @@
-"""User model and RBAC workspace helpers."""
+"""User model. Request-scoped tenant helpers live in app/auth/context.py."""
 import re
 from datetime import datetime, timezone
 
-from flask_jwt_extended import get_jwt_identity, get_jwt
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -63,34 +62,3 @@ class User(db.Model, PkUuidMixin, TimestampsMixin):
             "status": self.status.value if self.status else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-
-
-# --------------------------------------------------------------------------
-# Request-scoped tenant helpers. The active organization always comes from the
-# validated JWT claim, never from client-supplied params alone.
-# --------------------------------------------------------------------------
-
-def current_user_id() -> str | None:
-    return get_jwt_identity()
-
-
-def current_tenant() -> dict | None:
-    """Return the {org_id, role} claims from the current token, or None."""
-    claims = get_jwt()
-    org_id = claims.get("org")
-    role = claims.get("role")
-    if not org_id:
-        return None
-    return {"org_id": org_id, "role": role}
-
-
-def require_org() -> str:
-    tenant = current_tenant()
-    if not tenant:
-        raise PermissionError("Organization context missing from token.")
-    return tenant["org_id"]
-
-
-def current_role() -> str:
-    tenant = current_tenant()
-    return tenant["role"] if tenant else None

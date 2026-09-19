@@ -46,6 +46,11 @@ class StorageBackend(ABC):
     def exists(self, tenant_id: str, storage_path: str) -> bool:
         pass
 
+    @abstractmethod
+    def resolve(self, tenant_id: str, storage_path: str) -> Path:
+        """Return the absolute, tamper-checked file path for a stored item."""
+        pass
+
 
 class LocalStorage(StorageBackend):
     """Disk-based storage. Paths are internal keys, never user input."""
@@ -96,6 +101,10 @@ class LocalStorage(StorageBackend):
         target = self._resolve(tenant_id, storage_path)
         return target.is_file()
 
+    def resolve(self, tenant_id: str, storage_path: str) -> Path:
+        """Return the absolute filesystem path for a stored item (safe)."""
+        return self._resolve(tenant_id, storage_path)
+
 
 def get_storage() -> StorageBackend:
     """Return the configured backend (cached on the app)."""
@@ -112,27 +121,16 @@ def get_storage() -> StorageBackend:
 
 def sign_download_token(tenant_id: str, storage_path: str) -> str:
     """Short-lived signed token granting read access to one stored file."""
-    from flask_jwt_extended import create_access_token
+    from ..auth.tokens import issue_download_token
 
-    return create_access_token(
-        identity="download",
-        additional_claims={
-            "scope": "download",
-            "org": tenant_id,
-            "path": storage_path,
-        },
-        expires_delta=current_app.config["DOWNLOAD_TOKEN_TTL"],
-    )
+    return issue_download_token(tenant_id, storage_path)
 
 
 def resolve_download_token(token: str) -> dict:
     """Validate a download token; returns {'org_id', 'path'} or raises."""
-    from flask_jwt_extended import decode_token
+    from ..auth.tokens import decode_download_token
 
-    claims = decode_token(token)
-    if claims.get("scope") != "download":
-        raise PermissionError("Not a download token.")
-    return {"org_id": claims["org"], "path": claims["path"]}
+    return decode_download_token(token)
 
 
 def extract_zip_entries(zip_bytes: bytes, tenant_id: str, scope: str, allowed_exts: set[str]):

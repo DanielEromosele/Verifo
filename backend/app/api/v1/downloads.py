@@ -1,9 +1,9 @@
 """Signed download link for stored documents."""
+import io
+
 from flask import Blueprint, abort, send_file
 
-from ..models.common import RoleCode
-from ..rbac import current_org_id, require_auth, roles_required
-from ..services.storage import get_storage, resolve_download_token
+from ...services.storage import get_storage, resolve_download_token
 
 downloads_bp = Blueprint("downloads", __name__)
 
@@ -16,8 +16,6 @@ def download(token: str):
     except Exception:  # noqa: BLE001 - expired or malformed tokens are 400
         abort(400, description="Invalid or expired download token.")
 
-    # Enforce tenant scope even for "public" links: the link is bound to the
-    # originating organization.
     token_org = payload["org_id"]
     storage = get_storage()
     if not storage.exists(token_org, payload["path"]):
@@ -25,7 +23,7 @@ def download(token: str):
     data = storage.read(token_org, payload["path"])
     filename = payload["path"].rsplit("/", 1)[-1]
     return send_file(
-        __import__("io").BytesIO(data),
+        io.BytesIO(data),
         as_attachment=True,
         download_name=filename.rsplit("-", 1)[-1],
         mimetype="application/octet-stream",

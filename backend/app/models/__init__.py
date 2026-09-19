@@ -3,11 +3,25 @@ from .organization import Membership, Organization
 from .user import User
 from .audit import AuditLog
 from .apikey import APIKey
+from .domain import (
+    DocumentType,
+    QueueTask,
+    ReferenceDocument,
+    ScreeningItem,
+    ScreeningJob,
+    Verification,
+)
 
 __all__ = [
     "APIKey",
     "AuditLog",
+    "DocumentType",
     "Membership",
     "Organization",
+    "QueueTask",
+    "ReferenceDocument",
+    "ScreeningItem",
+    "ScreeningJob",
     "User",
+    "Verification",
 ]
