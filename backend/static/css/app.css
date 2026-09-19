@@ -148,6 +148,7 @@ table.v-table { width: 100%; min-width: 38rem; border-collapse: collapse; font-s
   color: var(--brand-600); }
 .page-header h1 { margin-top: 0.25rem; font-size: 1.5rem; }
 .subtitle { margin-top: 0.3125rem; font-size: 0.875rem; line-height: 1.55; color: var(--gray-500); max-width: 44rem; }
+.app-main { padding-top: 1.5rem; padding-bottom: 4rem; }
 
 /* ---------- column layouts ---------- */
 .split-2-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 1.25rem; align-items: start; }
@@ -176,16 +177,52 @@ table.v-table { width: 100%; min-width: 38rem; border-collapse: collapse; font-s
 @media (max-width: 900px) {
   .split-2-3, .split-2col { grid-template-columns: minmax(0, 1fr); }
 }
+
 @media (max-width: 720px) {
   .container { padding: 0 1rem; }
-  .topbar-inner { gap: 0.5rem; }
-  .topbar-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .app-main { padding-top: 1rem; padding-bottom: 3rem; }
+
+  /* Topbar wraps: brand + account on row one, nav links scroll on row two. */
+  .topbar-inner { height: auto; min-height: 3.5rem; flex-wrap: wrap; row-gap: 0.375rem;
+    padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .brand { margin-right: auto; }
+  .topbar-user { margin-left: auto; gap: 0.375rem; }
+  .user-meta { display: none; }
+  .topbar-nav { order: 3; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .topbar-nav::-webkit-scrollbar { display: none; }
   .topbar-nav a { white-space: nowrap; }
-  .user-meta { display: none; }
+  .topbar-nav .btn { padding: 0.375rem 0.875rem; }
+
+  .page-header { margin-bottom: 1.25rem; }
   .page-header h1 { font-size: 1.3125rem; }
   .page-header .actions { width: 100%; }
   .page-header .actions .btn { flex: 1 1 auto; }
+
+  .card-body { padding: 1rem; }
+  .card-header { padding: 0.875rem 1rem; }
+  .stat-grid { gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+  .stat-card { padding: 1rem; }
+  .stat-card .stat-value { font-size: 1.25rem; }
+  .v-table thead th, .v-table tbody td { padding-left: 1rem; padding-right: 1rem; }
+  .score-ring { width: 3.75rem; height: 3.75rem; }
+  .score-ring > div { width: 2.875rem; height: 2.875rem; font-size: 0.9375rem; }
+  .auth-card { padding: 1.5rem; }
+
+  /* Landing */
+  .hero { padding: 3.5rem 0 3rem; }
+  .section { padding: 3rem 0; }
+  .site-footer .container { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 420px) {
+  .auth-main { padding: 1.25rem 0.75rem; }
+  .auth-card { padding: 1.25rem; }
+  .auth-demo { grid-template-columns: 1fr; }
+  .page-header .actions .btn { flex: 1 1 100%; }
+  .hero { padding: 2.75rem 0 2.25rem; }
+  .hero-stat b { font-size: 1.125rem; }
+  .hero-stats { gap: 1.25rem; }
+  .section { padding: 2.5rem 0; }
 }
 
 /* ---------- auth pages ---------- */
