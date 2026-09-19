@@ -1,0 +1,45 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+.python-version
+
+# --- Env & secrets (NEVER commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+dist/
+.vite/
+
+# --- Databases ---
+*.db
+*.sqlite3
+*.sqlite
+instance/
+
+# --- Runtime / storage ---
+storage/
+uploads/
+*.log
+logs/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Misc ---
+*.zip
+!docs/**/*.zip
