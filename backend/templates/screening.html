@@ -1,0 +1,32 @@
+{% extends "app.html" %}
+{% block title %}Screening jobs — Verifo{% endblock %}
+{% block section %}screening{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Bulk screening</p>
+    <h1>Screening jobs</h1>
+    <p class="subtitle">Process batches of documents against a single trusted reference.</p>
+  </div>
+  <div class="actions" id="create-slot"></div>
+</div>
+
+<div class="split-2col">
+  <div class="card">
+    <div class="card-header">
+      <div><h2>Jobs</h2><p id="jobs-count">0 job(s)</p></div>
+    </div>
+    <ul id="jobs-list" style="list-style:none;margin:0;padding:0"></ul>
+    <p id="jobs-empty" class="text-sm text-muted" style="padding:1.25rem"></p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div><h2>Items</h2><p id="items-heading">Select a job to inspect</p></div>
+      <button type="button" class="btn btn-secondary btn-sm hidden" id="retry-btn">Retry failed</button>
+    </div>
+    <ul id="items-list" style="list-style:none;margin:0;padding:0"></ul>
+    <div id="items-empty"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/screening.js"></script>{% endblock %}

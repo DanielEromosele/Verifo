@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="legal-header">
+  <div class="container">
+    <a class="brand" href="/">
+      <span class="brand-mark"><span class="material-symbols-outlined">verified</span></span>
+      Verifo
+    </a>
+    <nav class="topbar-nav">
+      <a href="/policy" class="{% if section == 'policy' %}on{% endif %}">Privacy Policy</a>
+      <a href="/terms" class="{% if section == 'terms' %}on{% endif %}">Terms &amp; Conditions</a>
+    </nav>
+  </div>
+</header>
+<main class="legal-main">
+  <article class="legal-article">
+    {% block legal %}{% endblock %}
+  </article>
+</main>
+{% endblock %}

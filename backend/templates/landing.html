@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Verifo — Document verification that ships{% endblock %}
+{% block body %}
+<div class="landing">
+  <nav class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark"><span class="material-symbols-outlined">verified</span></span>
+        Verifo
+      </a>
+      <div class="topbar-nav">
+        <a href="#pipeline">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#security">Security</a>
+      </div>
+      <div class="topbar-nav">
+        <a href="/signin">Sign in</a>
+        <a href="/request-access" class="btn btn-primary" style="padding:0.5rem 1rem">Request access</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <span class="hero-badge">Anti-fraud credential verification for institutions</span>
+      <h1>Confirm documents are genuine — in seconds, not weeks.</h1>
+      <p class="sub">Verifo compares every submission against your institution's own trusted reference library, flags tampering, and gives your team a clear, auditable decision.</p>
+      <div class="hero-actions">
+        <a href="/request-access" class="btn btn-primary" style="padding:0.625rem 1.25rem">Request access</a>
+        <a href="/signin" class="btn btn-secondary" style="padding:0.625rem 1.25rem">Sign in</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>4 checks</b>per document</div>
+        <div class="hero-stat"><b>&lt;60s</b>median verdict</div>
+        <div class="hero-stat"><b>100%</b>audited decisions</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" id="pipeline">
+    <div class="container">
+      <h2>Every document gets four independent checks</h2>
+      <p class="lead">Each check scores 0–100. A weighted blend produces one confidence score with a clear verdict — and the reasons are always explained.</p>
+      <div class="steps">
+        <div class="step">
+          <span class="num">01</span>
+          <h3>Readability (OCR)</h3>
+          <p>Is the document cleanly readable? Blurry scans and poor quality pull this score down.</p>
+        </div>
+        <div class="step">
+          <span class="num">02</span>
+          <h3>Template match</h3>
+          <p>Does layout, typography and seal line up with the trusted reference original?</p>
+        </div>
+        <div class="step">
+          <span class="num">03</span>
+          <h3>Registry match</h3>
+          <p>Do the issuing office's own records agree? Full agreement scores 100.</p>
+        </div>
+        <div class="step">
+          <span class="num">04</span>
+          <h3>Tamper signals</h3>
+          <p>A forensic scan for edits — metadata rewrites, cloned pixels, shifted seals.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="container">
+      <h2>Your verification workspace</h2>
+      <p class="lead">Publish the copies your institution actually issues, then verify single documents or whole batches against them.</p>
+      <div class="feature-grid">
+        <div class="feature">
+          <span class="material-symbols-outlined ic">library_books</span>
+          <h3>Trusted reference library</h3>
+          <p>Upload and fingerprint the authoritative templates you issue. Every screening compares against them.</p>
+        </div>
+        <div class="feature">
+          <span class="material-symbols-outlined ic">fact_check</span>
+          <h3>Single verification</h3>
+          <p>Upload one document and get a scored breakdown with evidence, in under a minute.</p>
+        </div>
+        <div class="feature">
+          <span class="material-symbols-outlined ic">inventory_2</span>
+          <h3>Bulk screening jobs</h3>
+          <p>Queue hundreds of documents as a ZIP and track progress per item, with retry for failures.</p>
+        </div>
+        <div class="feature">
+          <span class="material-symbols-outlined ic">verified_user</span>
+          <h3>Operator decisions</h3>
+          <p>Review ambiguous results, record decisions and comments — every action is appended to the audit log.</p>
+        </div>
+        <div class="feature">
+          <span class="material-symbols-outlined ic">api</span>
+          <h3>API access</h3>
+          <p>Issue API keys with expiry so your back-office systems integrate without shared passwords.</p>
+        </div>
+        <div class="feature">
+          <span class="material-symbols-outlined ic">tune</span>
+          <h3>Tunable scoring</h3>
+          <p>Adjust check weights and thresholds to match your risk appetite — with a live worked example.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="security">
+    <div class="container">
+      <h2>Built for trust</h2>
+      <p class="lead">Security and accountability are the product, not an afterthought.</p>
+      <div class="steps">
+        <div class="step">
+          <span class="num">01</span>
+          <h3>Scoped sessions</h3>
+          <p>JWT sessions bound to your organization and role — operators, submitters and admins see exactly what they should.</p>
+        </div>
+        <div class="step">
+          <span class="num">02</span>
+          <h3>Append-only audit</h3>
+          <p>Logins, uploads, config changes, decisions and API key events are recorded and queryable.</p>
+        </div>
+        <div class="step">
+          <span class="num">03</span>
+          <h3>Keyed API access</h3>
+          <p>Per-integration API keys with optional expiry and revocation, never shared credentials.</p>
+        </div>
+        <div class="step">
+          <span class="num">04</span>
+          <h3>Full API surface</h3>
+          <p>A versioned REST API under <span class="mono">/api/v1</span> with consistent JSON error envelopes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>Start verifying with confidence</h2>
+      <p>Set up your workspace in minutes — upload your first reference today.</p>
+      <div class="hero-actions">
+        <a href="/request-access" class="btn btn-primary" style="padding:0.625rem 1.25rem">Request access</a>
+        <a href="/signin" class="btn btn-secondary" style="padding:0.625rem 1.25rem">Sign in</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© {{ current_year() }} Verifo · <a href="/policy">Privacy Policy</a> · <a href="/terms">Terms &amp; Conditions</a></span>
+      <span>v1 API · <a href="/api/v1/health" class="mono">/api/v1/health</a></span>
+    </div>
+  </footer>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "legal_base.html" %}
+{% block title %}Privacy Policy — Verifo{% endblock %}
+{% block legal %}
+<h1 style="font-size:1.5rem">Privacy Policy</h1>
+<p class="updated">Last updated: September 2026</p>
+
+<p>
+  This Privacy Policy explains how Verifo ("we", "us") handles personal information that flows through
+  our document verification service. We designed Verifo for institutions that verify credentials and
+  documents they issued, and this policy reflects that purpose.
+</p>
+
+<h2>1. What we collect</h2>
+<ul>
+  <li><strong>Account information</strong> — name, work email, organization, and role when you create
+    or are invited to a workspace.</li>
+  <li><strong>Documents you upload</strong> — the files submitted for verification, reference copies
+    your organization publishes, and the extracted fields, scores, and decisions produced from them.</li>
+  <li><strong>Usage and audit events</strong> — logins, uploads, decisions, configuration changes, and
+    API activity, which we record to keep an accurate audit trail.</li>
+  <li><strong>Technical metadata</strong> — timestamps, IP addresses, and API key activity for security
+    and abuse prevention.</li>
+</ul>
+
+<h2>2. How we use it</h2>
+<ul>
+  <li>To run the verification service and protect its integrity.</li>
+  <li>To render verdicts, produce the audit log, and let your organization review decisions.</li>
+  <li>To communicate with you about your workspace, security, and changes to the service.</li>
+  <li>To keep the platform safe and prevent misuse.</li>
+</ul>
+
+<h2>3. What we don't do</h2>
+<ul>
+  <li>We do not sell personal information.</li>
+  <li>We do not use the contents of verified documents to advertise to you.</li>
+  <li>We do not disclose uploaded documents to third parties except as required to operate the
+    service, comply with law, or with your organization's instruction.</li>
+</ul>
+
+<h2>4. Retention</h2>
+<p>
+  Documents, references, and audit records are retained as long as your organization's workspace
+  exists, so verifications stay auditable. Your organization controls this data; contact an
+  administrator in your workspace to request deletion. We may keep minimal access logs for a
+  reasonable period to secure the platform.
+</p>
+
+<h2>5. How we protect it</h2>
+<p>
+  Communications are encrypted in transit. Access is scoped by organization and role, sessions are
+  bearer-token based, and API access uses keyed credentials. Decisions and configuration changes are
+  written to an append-only audit log so that activity is accountable.
+</p>
+
+<h2>6. Your rights</h2>
+<p>
+  Depending on where you are located, you may have rights to access, correct, or delete personal
+  information we hold. Because we are a processor for your organization, please raise requests
+  through your organization's administrator first.
+</p>
+
+<h2>7. Contact</h2>
+<p>Questions about this policy may be sent to:</p>
+<address>
+  Verifo, c/o the operator of this development deployment<br>
+  <a href="mailto:privacy@verifo.example">privacy@verifo.example</a>
+</address>
+
+<p><a href="/">← Back to Verifo</a></p>
+{% endblock %}

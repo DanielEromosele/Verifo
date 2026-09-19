@@ -17,7 +17,8 @@ claims to "guarantee" authenticity; the human operator owns the final decision.
 
 ```
 backend/   Flask + SQLAlchemy + Alembic, JWT auth, self-built job queue + worker
-frontend/  React 18 + Vite + Tailwind
+templates/ + static/  server-rendered UI (Jinja2 templates, vanilla CSS/JS) — served by the Flask app
+screenshots/  browser walkthrough captures (web-*.png)
 docs/      growing documentation (this plan, API docs, etc.)
 ```
 
@@ -29,8 +30,11 @@ docs/      growing documentation (this plan, API docs, etc.)
 ## Quick start (see README sections per phase)
 
 Backend — `python -m venv .venv`, install `backend/requirements.txt`, copy `.env.example`,
-`flask --app run.py db upgrade`, `flask --app run.py seed` (Phase 9). Frontend —
-`npm install`, `npm run dev` in `frontend/`.
+`flask --app run.py db upgrade`, `flask --app run.py seed` (Phase 9). UI — the Flask app
+serves everything (Jinja2 templates + `backend/static/`): run the API, then open
+`http://localhost:5000` — landing, auth pages (sign in / request access / MFA / reset),
+dashboard, verify, screening, references, settings, and legal pages are all server-rendered.
+Demo creds and walkthrough in `IMPLEMENTATION_PLAN.md` (login.md / dashboard section).
 
 ## Roadmap
 

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+<nav class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="/dashboard">
+      <span class="brand-mark"><span class="material-symbols-outlined">verified</span></span>
+      Verifo
+    </a>
+    <div class="topbar-nav" id="app-nav">
+      <a href="/dashboard" class="{% if section == 'dashboard' %}on{% endif %}">Dashboard</a>
+      <a href="/verify" class="{% if section == 'verify' %}on{% endif %}">Verify</a>
+      <a href="/screening" class="{% if section == 'screening' %}on{% endif %}">Screening</a>
+      <a href="/references" class="{% if section == 'references' %}on{% endif %}">References</a>
+      <a href="/settings" class="{% if section == 'settings' %}on{% endif %}">Settings</a>
+    </div>
+    <div class="topbar-user">
+      <div class="user-meta">
+        <span class="n" id="user-name">…</span>
+        <span class="o" id="user-org">…</span>
+      </div>
+      <span class="avatar" id="user-avatar">…</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="sign-out">Sign out</button>
+    </div>
+  </div>
+</nav>
+<main class="container" style="padding:1.5rem 1.5rem 4rem">
+  {% block app %}{% endblock %}
+</main>
+<script src="/static/js/common.js"></script>
+<script>
+(function () {
+  Verifo.bootstrap().then(function (me) {
+    var role = Verifo.role();
+    var nameEl = document.getElementById("user-name");
+    var orgEl = document.getElementById("user-org");
+    var avEl = document.getElementById("user-avatar");
+    if (me && me.user) {
+      var name = me.user.full_name || me.user.email || "User";
+      nameEl.textContent = name;
+      avEl.textContent = name.split(/\s+/).map(function (w) { return w[0]; }).slice(0, 2).join("").toUpperCase();
+      var org = (me.user && me.user.organization && me.user.organization.name)
+        || "Workspace";
+      orgEl.textContent = org + (role ? " · " + role : "");
+    }
+  });
+  document.getElementById("sign-out").addEventListener("click", function () {
+    Verifo.signOut();
+  });
+})();
+</script>
+{% block scripts %}{% endblock %}
+{% endblock %}

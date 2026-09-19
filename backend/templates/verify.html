@@ -1,0 +1,42 @@
+{% extends "app.html" %}
+{% block title %}Verify a document — Verifo{% endblock %}
+{% block section %}verify{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Single verification</p>
+    <h1>Verify a document</h1>
+    <p class="subtitle">Upload a submission and compare it against your trusted reference library.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h2 style="font-size:0.9375rem">New submission</h2>
+    <div class="split-2col" style="margin-top:1rem;gap:1rem">
+      <div>
+        <label class="label" for="ref-select">Reference to compare against (optional)</label>
+        <select class="input" id="ref-select"><option value="">No reference (library lookup only)</option></select>
+      </div>
+      <div>
+        <label class="label" for="file-input">Document file</label>
+        <input class="input" type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg">
+      </div>
+    </div>
+    <div id="submit-msg"></div>
+    <button type="button" class="btn btn-primary" id="submit-btn" style="margin-top:1rem">Submit for verification</button>
+  </div>
+</div>
+
+<div class="split-2-3" style="margin-top:1.5rem">
+  <div class="card">
+    <div class="card-header">
+      <div><h2>Results</h2><p id="results-count">0 submissions</p></div>
+    </div>
+    <ul id="results-list" style="list-style:none;margin:0;padding:0"></ul>
+    <p id="results-empty" class="text-sm text-muted" style="padding:1.25rem"></p>
+  </div>
+  <div id="detail-panel"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/verify.js"></script>{% endblock %}

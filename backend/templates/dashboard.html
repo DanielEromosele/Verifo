@@ -1,0 +1,65 @@
+{% extends "app.html" %}
+{% block title %}Dashboard — Verifo{% endblock %}
+{% block section %}dashboard{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow" id="dash-org">Workspace</p>
+    <h1 id="dash-welcome">Welcome back</h1>
+    <p class="subtitle" id="dash-sub">Loading workspace…</p>
+  </div>
+  <div class="actions">
+    <a href="/verify" class="btn btn-primary">Verify a document</a>
+    <a href="/screening" class="btn btn-secondary">Bulk screening</a>
+  </div>
+</div>
+
+<div class="stat-grid" id="stat-grid">
+  <div class="card stat-card"><span class="stat-label">Processed (30 days)</span><span class="stat-value">—</span></div>
+  <div class="card stat-card"><span class="stat-label">Avg confidence score</span><span class="stat-value">—</span></div>
+  <div class="card stat-card"><span class="stat-label">Flagged for review</span><span class="stat-value warn">—</span></div>
+  <div class="card stat-card"><span class="stat-label">Screening jobs</span><span class="stat-value">—</span></div>
+</div>
+
+<div class="split-2-3" style="margin-top:1.5rem">
+  <div class="card">
+    <div class="card-header"><div><h2>Verification volume</h2><p>Document outcomes over the last 30 days</p></div></div>
+    <div class="card-body">
+      <div class="bars" id="volume-bars"></div>
+      <p class="text-sm text-muted" id="volume-empty" style="margin-top:1rem"></p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><h2>Outcome distribution</h2><p>Results by status</p></div></div>
+    <div class="card-body" id="outcome-list"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem">
+  <div class="card-header">
+    <div><h2>Recent verifications</h2><p>Latest submissions</p></div>
+    <a href="/verify" class="text-sm" style="color:var(--brand-600);font-weight:600">Open verification view →</a>
+  </div>
+  <div class="table-wrap">
+    <table class="v-table">
+      <thead><tr><th>Document</th><th>Status</th><th>Score</th><th>Decision</th></tr></thead>
+      <tbody id="recent-rows"></tbody>
+    </table>
+  </div>
+  <p class="text-sm text-muted" id="recent-empty" style="padding:1.25rem"></p>
+</div>
+
+<div class="card staff-only hidden" style="margin-top:1.5rem">
+  <div class="card-header">
+    <div><h2>Team members</h2><p>Everyone in this organization</p></div>
+    <a href="/settings" class="text-sm" style="color:var(--brand-600);font-weight:600">Manage in settings →</a>
+  </div>
+  <div class="table-wrap">
+    <table class="v-table">
+      <thead><tr><th>Member</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
+      <tbody id="team-rows"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/dashboard.js"></script>{% endblock %}

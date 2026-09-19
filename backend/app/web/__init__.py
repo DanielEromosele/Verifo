@@ -1,0 +1,97 @@
+"""Web blueprint: server-rendered HTML pages (Flask + Jinja2 + vanilla JS/CSS)."""
+from datetime import datetime
+
+from flask import Blueprint, render_template
+
+web_bp = Blueprint("web", __name__)
+
+
+@web_bp.app_context_processor
+def inject_globals():
+    return {"current_year": lambda: datetime.now().year}
+
+
+def page(template, **kwargs):
+    return render_template(template, **kwargs)
+
+
+# --- Marketing / public pages ---
+
+
+@web_bp.get("/")
+def landing():
+    return page("landing.html")
+
+
+# --- Identity (VERIX-style) auth pages ---
+
+
+@web_bp.get("/signin")
+def signin():
+    return page("signin.html", active="signin")
+
+
+@web_bp.get("/login")
+def login_alias():
+    return page("signin.html", active="signin")
+
+
+@web_bp.get("/request-access")
+def request_access():
+    return page("request_access.html", active="request")
+
+
+@web_bp.get("/register")
+def register_alias():
+    return page("request_access.html", active="request")
+
+
+@web_bp.get("/mfa")
+def mfa():
+    return page("mfa.html", active="mfa")
+
+
+@web_bp.get("/reset")
+def reset():
+    return page("reset.html", active="reset")
+
+
+# --- Legal / policy pages ---
+
+
+@web_bp.get("/policy")
+def privacy_policy():
+    return page("privacy.html", section="policy")
+
+
+@web_bp.get("/terms")
+def terms():
+    return page("terms.html", section="terms")
+
+
+# --- Workspace pages (data loaded client-side via the /api/v1 surface) ---
+
+
+@web_bp.get("/dashboard")
+def dashboard():
+    return page("dashboard.html")
+
+
+@web_bp.get("/verify")
+def verify():
+    return page("verify.html")
+
+
+@web_bp.get("/screening")
+def screening():
+    return page("screening.html")
+
+
+@web_bp.get("/references")
+def references():
+    return page("references.html")
+
+
+@web_bp.get("/settings")
+def settings():
+    return page("settings.html")

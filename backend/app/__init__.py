@@ -1,14 +1,22 @@
 """Application factory for the Verifo backend."""
 import os
+from pathlib import Path
 
 from flask import Flask
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 def create_app(config_name: str = None, config_overrides: dict | None = None) -> Flask:
     from .config import CONFIG_MAP
     from .extensions import cors, db, jwt, limiter, migrate
 
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(BACKEND_DIR / "templates"),
+        static_folder=str(BACKEND_DIR / "static"),
+        static_url_path="/static",
+    )
     env = config_name or os.environ.get("VERIFO_ENV", "development")
     app.config.from_object(CONFIG_MAP.get(env, CONFIG_MAP["development"]))
     if config_overrides:
@@ -46,17 +54,14 @@ def create_app(config_name: str = None, config_overrides: dict | None = None) ->
 
     app.register_blueprint(api_v1_bp, url_prefix="/api/v1")
 
+    # --- web pages (server-rendered HTML; the SPA-style frontend) ---
+    from .web import web_bp
+
+    app.register_blueprint(web_bp)
+
     # --- CLI: run the self-built queue worker ---
     from .cli import register_cli
 
     register_cli(app)
-
-    @app.get("/")
-    def root():
-        return {
-            "service": "Verifo",
-            "api_version": "v1",
-            "docs": "/docs",
-        }
 
     return app

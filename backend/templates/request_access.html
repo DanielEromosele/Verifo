@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Request access — Verifo{% endblock %}
+{% block body %}
+<main class="auth-main">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><span class="material-symbols-outlined">verified</span></span>
+      &nbsp;Verifo
+    </div>
+    <h1 class="auth-title">Request access</h1>
+    <p class="auth-sub">Set up your organization to start verifying documents.</p>
+
+    <div id="error-box" class="alert alert-error hidden"></div>
+    <div id="ok-box" class="alert alert-ok hidden"></div>
+
+    <form id="register-form" novalidate>
+      <div class="auth-field">
+        <label class="label" for="full_name">Full name</label>
+        <input class="input" id="full_name" name="full_name" type="text" placeholder="Ada Lovelace" autocomplete="name" required>
+      </div>
+      <div class="auth-field">
+        <label class="label" for="email">Work email</label>
+        <input class="input" id="email" name="email" type="email" placeholder="you@organization.com" autocomplete="email" required>
+      </div>
+      <div class="auth-field">
+        <label class="label" for="organization_name">Organization</label>
+        <input class="input" id="organization_name" name="organization_name" type="text" placeholder="Your Organization Inc." required>
+      </div>
+      <div class="auth-field">
+        <label class="label" for="industry">Sector</label>
+        <select class="input" id="industry" name="industry">
+          <option value="">Select a sector…</option>
+          <option>Higher education</option>
+          <option>Corporate HR</option>
+          <option>Financial services</option>
+          <option>Public sector</option>
+          <option>Healthcare</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="auth-field">
+        <label class="label" for="use_case">Primary use case</label>
+        <select class="input" id="use_case" name="use_case">
+          <option value="">Select a use case…</option>
+          <option>International student onboarding</option>
+          <option>Employment background checks</option>
+          <option>KYC / fraud prevention</option>
+          <option>Compliance & credential audits</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="auth-field">
+        <label class="label" for="password">Password</label>
+        <input class="input" id="password" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required>
+      </div>
+      <div class="auth-field" style="margin-top:0.625rem">
+        <label class="label" style="display:flex;gap:0.5rem;align-items:flex-start;font-weight:500;font-size:0.8125rem;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="agree" style="margin-top:0.15rem" required>
+          <span>I agree to the <a href="/terms" style="color:var(--brand-600);text-decoration:underline">Acceptable Use Policy</a> and confirm the documents I verify are my organization's own.</span>
+        </label>
+      </div>
+      <div class="auth-actions">
+        <button type="submit" id="submit-btn" class="btn btn-primary w-full">Create workspace</button>
+      </div>
+    </form>
+
+    <p class="auth-link" style="margin-top:1.25rem">Already have access? <a href="/signin">Sign in</a></p>
+  </div>
+</main>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/auth.js"></script>
+{% endblock %}

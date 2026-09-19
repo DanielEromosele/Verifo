@@ -3,6 +3,13 @@
 Issuer-first AI-powered document verification & bulk screening platform.
 Repository: https://github.com/Omonire/Verifo
 
+> **UI note (2026-09-19):** the React/Vite frontend (`frontend/`) has been **removed**.
+> The UI is now fully server-rendered by Flask — `backend/templates/` (Jinja2) +
+> `backend/static/` (vanilla CSS/JS). Routes: `/` landing, `/signin`, `/request-access`,
+> `/mfa`, `/reset`, workspace pages under auth (`/dashboard`, `/verify`, `/screening`,
+> `/references`, `/settings`), `/policy`, `/terms`. References to `frontend/src/...`
+> below are historical.
+
 **Conventions**
 - One meaningful commit per phase (e.g. `feat: add organization foundation`).
 - Never one giant commit; never commit `.env` or secrets.

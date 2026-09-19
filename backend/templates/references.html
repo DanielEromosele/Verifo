@@ -1,0 +1,25 @@
+{% extends "app.html" %}
+{% block title %}References — Verifo{% endblock %}
+{% block section %}references{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Trusted reference library</p>
+    <h1>References</h1>
+    <p class="subtitle">Publish the authoritative copies your institution issues.</p>
+  </div>
+  <div class="actions" id="create-slot"></div>
+</div>
+<input class="input" id="search" placeholder="Search references…" style="max-width:22rem;margin-bottom:1.5rem">
+<div class="split-2-3">
+  <div class="card">
+    <div class="card-header">
+      <div><h2>Library</h2><p id="lib-count">0 reference(s)</p></div>
+    </div>
+    <ul id="ref-list" style="list-style:none;margin:0;padding:0"></ul>
+    <p id="refs-empty" class="text-sm text-muted" style="padding:1.25rem"></p>
+  </div>
+  <div id="ref-detail"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/references.js"></script>{% endblock %}

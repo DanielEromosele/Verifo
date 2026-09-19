@@ -1,0 +1,30 @@
+{% extends "app.html" %}
+{% block title %}Settings — Verifo{% endblock %}
+{% block section %}settings{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h1>Workspace settings</h1>
+    <p class="subtitle">Tune verification, manage your team and API access.</p>
+  </div>
+</div>
+
+<div class="tabs" id="settings-tabs">
+  <button type="button" class="tab-pill on" data-tab="config">Configuration</button>
+  <button type="button" class="tab-pill off" data-tab="team">Team</button>
+  <button type="button" class="tab-pill off" data-tab="keys">API keys</button>
+  <button type="button" class="tab-pill off" data-tab="audit">Audit log</button>
+</div>
+
+<div id="tab-config" style="margin-top:1.5rem" hidden></div>
+<div id="tab-team" style="margin-top:1.5rem" hidden></div>
+<div id="tab-keys" style="margin-top:1.5rem" hidden></div>
+<div id="tab-audit" style="margin-top:1.5rem" hidden></div>
+<div id="tab-noaccess" class="card" style="margin-top:1.5rem" hidden>
+  <div class="card-body">
+    <div class="empty"><h3>No access</h3><p>Only administrators can change organization configuration. Reach out to an organization administrator.</p></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/settings.js"></script>{% endblock %}
