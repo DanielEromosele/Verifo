@@ -22,6 +22,13 @@ def create_app(config_name: str = None, config_overrides: dict | None = None) ->
     if config_overrides:
         app.config.update(config_overrides)
 
+    # Never run without a real database (no silent SQLite fallback in deploys).
+    from .config import require_database
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = require_database(
+        app.config.get("SQLALCHEMY_DATABASE_URI")
+    )
+
     # --- extensions ---
     db.init_app(app)
     migrate.init_app(app, db)

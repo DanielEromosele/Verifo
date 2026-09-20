@@ -14,18 +14,6 @@ from pathlib import Path
 
 import sqlalchemy as sa
 
-from .base import BaseConfig, BASE_DIR, INSTANCE_DIR
-from .environments import DevelopmentConfig, ProductionConfig, TestingConfig
-
-DEFAULT_SQLITE_URL = f"sqlite:///{INSTANCE_DIR / 'verifo.db'}"
-
-CONFIG_MAP = {
-    "development": DevelopmentConfig,
-    "testing": TestingConfig,
-    "production": ProductionConfig,
-}
-
-
 def _load_dotenv():
     """Load backend/.env into the process environment if present."""
     try:
@@ -36,7 +24,36 @@ def _load_dotenv():
         pass
 
 
+# base is env-agnostic and must be imported first (define BASE_DIR).
+from .base import BaseConfig, BASE_DIR, INSTANCE_DIR  # noqa: E402
+
+# Load .env AFTER BASE_DIR resolves, but BEFORE environments build their
+# class attributes (DATABASE_URL / VERIFO_ALLOW_SQLITE must be visible).
 _load_dotenv()
+from .environments import DevelopmentConfig, ProductionConfig, TestingConfig  # noqa: E402
+
+DEFAULT_SQLITE_URL = f"sqlite:///{INSTANCE_DIR / 'verifo.db'}"
+
+CONFIG_MAP = {
+    "development": DevelopmentConfig,
+    "testing": TestingConfig,
+    "production": ProductionConfig,
+}
+
+
+def require_database(uri: str) -> str:
+    """Validate a configured SQLALCHEMY_DATABASE_URI.
+
+    Accepts PostgreSQL and SQLite URLs; rejects empty/garbage so a deployed
+    app can never limp along without a real database.
+    """
+    uri = (uri or "").strip()
+    if uri.startswith("postgres") or uri.startswith("sqlite"):
+        return uri
+    raise RuntimeError(
+        "No usable database configured. Set DATABASE_URL to a PostgreSQL URL "
+        "(for local SQLite dev, set VERIFO_ALLOW_SQLITE=1)."
+    )
 
 
 def resolve_database_url(requested: str = "") -> str:
@@ -81,5 +98,6 @@ __all__ = [
     "TestingConfig",
     "ProductionConfig",
     "resolve_database_url",
+    "require_database",
     "DEFAULT_SQLITE_URL",
 ]

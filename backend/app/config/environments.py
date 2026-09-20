@@ -4,23 +4,34 @@ import os
 from .base import BaseConfig
 
 
+def resolve_dev_database_uri() -> str:
+    """Resolve the development database URI (never a silent SQLite default).
+
+    Priority:
+      1. PostgreSQL DATABASE_URL -> used as-is.
+      2. VERIFO_FORCE_POSTGRES=1  -> '' (must be PostgreSQL; create_app rejects '').
+      3. VERIFO_ALLOW_SQLITE=1    -> local SQLite dev opt-in.
+      4. otherwise                -> '' (create_app rejects: no database).
+    """
+    url = os.environ.get("DATABASE_URL", "").strip()
+    if url:
+        return url if url.startswith("postgres") else ""
+    if os.environ.get("VERIFO_FORCE_POSTGRES") == "1":
+        return ""
+    if os.environ.get("VERIFO_ALLOW_SQLITE") == "1":
+        return (
+            BaseConfig.SQLALCHEMY_DATABASE_URI
+            or f"sqlite:///{BaseConfig.INSTANCE_DIR / 'verifo.db'}"
+        )
+    return ""
+
+
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
-    # In development, default database URL is SQLite unless DATABASE_URL set.
-    # VERIFO_FORCE_POSTGRES=1 makes PostgreSQL strictly required (no fallback):
-    # the app must never silently drop to SQLite in a deployed environment.
-    if os.environ.get("VERIFO_FORCE_POSTGRES") == "1":
-        _strict_db_url = os.environ.get("DATABASE_URL", "").strip()
-        if not _strict_db_url.startswith("postgres"):
-            raise RuntimeError(
-                "VERIFO_FORCE_POSTGRES=1 requires a PostgreSQL DATABASE_URL."
-            )
-        SQLALCHEMY_DATABASE_URI = _strict_db_url
-    else:
-        SQLALCHEMY_DATABASE_URI = os.environ.get(
-            "DATABASE_URL",
-            BaseConfig.SQLALCHEMY_DATABASE_URI or f"sqlite:///{BaseConfig.INSTANCE_DIR / 'verifo.db'}",
-        )
+    # SQLite is NEVER a default. A deployed app (Render) sets no
+    # VERIFO_ALLOW_SQLITE, so it can never silently open instance/verifo.db —
+    # '' here means create_app raises until a PostgreSQL DATABASE_URL is set.
+    SQLALCHEMY_DATABASE_URI = resolve_dev_database_uri()
 
 
 class TestingConfig(BaseConfig):
@@ -39,7 +50,13 @@ class ProductionConfig(BaseConfig):
     DEBUG = False
     STORAGE_ENCRYPT = True
     DEMO_AUTH_ENABLED = False
+    # PostgreSQL only. BaseConfig yields DATABASE_URL or ''; create_app rejects
+    # anything that is not postgres/sqlite (and '' always).
+    SQLALCHEMY_DATABASE_URI = BaseConfig.SQLALCHEMY_DATABASE_URI
 
     def __init__(self):
-        if not os.environ.get("DATABASE_URL"):
+        url = os.environ.get("DATABASE_URL", "") or ""
+        if not url:
             raise RuntimeError("DATABASE_URL must be set in production.")
+        if not url.startswith("postgres"):
+            raise RuntimeError("Production requires a PostgreSQL DATABASE_URL.")
