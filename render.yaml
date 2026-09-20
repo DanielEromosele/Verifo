@@ -1,0 +1,64 @@
+# Render Blueprint for Verifo — one-click deploy from this repo.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Architecture: a SINGLE web service runs the whole stack (gunicorn-free)
+# via backend/server.py — the web app, the embedded queue worker thread, and
+# (with VERIFO_SEED=1) the seeder all share one process. No Redis/Celery needed;
+# the queue is SQLAlchemy rows. The free Postgres add-on is used for durable state.
+#
+# Setup in the Render dashboard (or "sync: false" env vars below):
+#   - SECRET_KEY:       any long random string  (auto-generated if empty)
+#   - VERIFO_STORAGE_KEY: MUST be a valid Fernet key. Generate one with:
+#         python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+#     (ProductionConfig forces at-rest encryption; an invalid/empty key crashes
+#      the first file write.)
+#   - GEMINI_API_KEY / GROQ_API_KEY: optional; if both are absent the app runs
+#     fully local (deterministic text-layer extraction).
+#
+# Optional dedicated worker (instead of the embedded thread):
+#   comment out nothing needed — just add a second service, type "worker",
+#   rootDir backend, startCommand "python server.py --worker-only".
+
+services:
+  - type: web
+    name: verifo-web
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: frankfurt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: python server.py
+    preDeployCommand: python -m flask --app run.py db upgrade
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: VERIFO_ENV
+        value: production
+      - key: VERIFO_SEED
+        value: "1"
+      - key: SEED_SAMPLE
+        value: "0"
+      - key: VERIFO_FORCE_POSTGRES
+        value: "1"
+      - key: VERIFO_EMBED_WORKER
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: VERIFO_STORAGE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: verifo-db
+          property: connectionString
+      - key: JWT_ACCESS_TOKEN_EXPIRES_HOURS
+        value: "12"
+
+databases:
+  - name: verifo-db
+    databaseName: verifo
+    user: verifo
+    plan: free
+    postgresMajorVersion: "16"
