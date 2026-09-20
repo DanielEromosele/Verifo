@@ -26,6 +26,9 @@ services:
     rootDir: backend
     plan: free
     region: frankfurt
+    # Pin 3.12 so psycopg2-binary==2.9.9 and PyMuPDF==1.24.9 install from
+    # prebuilt wheels. On 3.13 both compile from source (slow, fragile).
+    pythonVersion: 3.12.10
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python server.py
     preDeployCommand: python -m flask --app run.py db upgrade
