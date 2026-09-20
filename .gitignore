@@ -9,6 +9,7 @@ env/
 .coverage
 htmlcov/
 .python-version
+!.python-version
 
 # --- Env & secrets (NEVER commit) ---
 .env
