@@ -108,6 +108,12 @@ def verify():
     return page("verify.html")
 
 
+@web_bp.get("/my-results")
+@page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
+def my_results():
+    return page("my_results.html")
+
+
 @web_bp.get("/screening")
 @page_access(RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
 def screening():

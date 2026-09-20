@@ -25,13 +25,20 @@
   <div class="card">
     <div class="card-header"><div><h2>Verification volume</h2><p>Document outcomes over the last 30 days</p></div></div>
     <div class="card-body">
-      <div class="bars" id="volume-bars"></div>
+      <div style="position:relative;height:13rem">
+        <canvas id="volume-chart"></canvas>
+      </div>
       <p class="text-sm text-muted" id="volume-empty" style="margin-top:1rem"></p>
     </div>
   </div>
   <div class="card">
     <div class="card-header"><div><h2>Outcome distribution</h2><p>Results by status</p></div></div>
-    <div class="card-body" id="outcome-list"></div>
+    <div class="card-body">
+      <div style="position:relative;height:13rem">
+        <canvas id="outcome-chart"></canvas>
+      </div>
+      <p class="text-sm text-muted" id="outcome-empty" style="margin-top:1rem;display:none"></p>
+    </div>
   </div>
 </div>
 
@@ -62,4 +69,4 @@
   </div>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/dashboard.js"></script>{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script src="/static/js/dashboard.js"></script>{% endblock %}

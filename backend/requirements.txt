@@ -14,3 +14,6 @@ PyMuPDF==1.24.9
 Pillow==10.4.0
 reportlab==4.2.0
 pytest==8.2.2
+# Real AI providers (Gemini/Groq) call their REST APIs directly via stdlib urllib — no SDK needed.
+# OCR for scanned documents (optional at runtime; install at deploy time):
+# rapidocr-onnxruntime==1.4.4

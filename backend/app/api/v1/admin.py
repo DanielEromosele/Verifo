@@ -89,9 +89,16 @@ def analytics():
     avg_score = round(sum(v.score or 0 for v in verifications) / total, 1) if total else 0.0
     flagged = sum(1 for v in verifications if (v.issues or []))
     per_day = {}
+    per_day_status = {}
     for v in verifications:
-        day = v.created_at.strftime("%Y-%m-%d") if v.created_at else "?"
+        if not v.created_at:
+            continue
+        day = v.created_at.strftime("%Y-%m-%d")
         per_day[day] = per_day.get(day, 0) + 1
+        bucket = per_day_status.setdefault(day, {})
+        status = v.status.value if v.status else "UNKNOWN"
+        bucket[status] = bucket.get(status, 0) + 1
+        bucket["_uploaded"] = bucket.get("_uploaded", 0) + 1
 
     return api_ok({
         "analytics": {
@@ -101,6 +108,8 @@ def analytics():
             "avg_score": avg_score,
             "flagged_ratio": round(flagged / total, 3) if total else 0.0,
             "per_day": dict(sorted(per_day.items())),
+            "per_day_status": {d: per_day_status[d]
+                               for d in sorted(per_day_status)},
             "jobs": len(jobs),
         }
     }), 200

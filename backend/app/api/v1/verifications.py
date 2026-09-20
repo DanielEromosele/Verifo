@@ -24,6 +24,7 @@ from ...utils.response import api_error, api_ok
 
 verifications_bp = Blueprint("verifications", __name__)
 ROLES = (RoleCode.ADMIN.value, RoleCode.OPERATOR.value)
+SUBMITTER_ROLES = (RoleCode.ADMIN.value, RoleCode.OPERATOR.value, RoleCode.SUBMITTER.value)
 
 
 def _parse_ai_evidence(raw: str | None) -> list | None:
@@ -127,12 +128,14 @@ def submit_verification():
 
 
 @verifications_bp.get("/<verification_id>")
-@roles_required(*ROLES)
+@roles_required(*SUBMITTER_ROLES)
 def get_verification(verification_id):
     org_id = require_org()
     row = Verification.query.filter_by(id=verification_id, organization_id=org_id).first()
     if not row:
         return api_error("NOT_FOUND", "Verification not found.", status=404)
+    if current_role() == RoleCode.SUBMITTER.value and row.created_by != current_user_id():
+        return api_error("FORBIDDEN", "You can only view your own submissions.", status=403)
     data = row.to_dict(include_private=True)
     data["download_token"] = sign_download_token(org_id, row.storage_path)
     if row.reference_id:

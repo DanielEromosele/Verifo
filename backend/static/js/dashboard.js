@@ -1,8 +1,18 @@
-/* Dashboard page: stats, volume chart, recent verifications, team. */
+/* Dashboard page: stats, Chart.js volume/outcome charts, recent verifications, team. */
 (function () {
   "use strict";
 
   function $(id) { return document.getElementById(id); }
+
+  var volumeChart = null;
+  var outcomeChart = null;
+
+  var BRAND = "#7c3aed";
+  var GRAY = "#e5e7eb";
+  var STATUS_COLORS = {
+    VERIFIED: "#059669", REVIEW: "#d97706", REJECTED: "#dc2626",
+    PROCESSING: "#0369a1", SUBMITTED: "#7c3aed",
+  };
 
   Verifo.bootstrap().then(function (me) {
     var role = Verifo.role();
@@ -76,42 +86,146 @@
   }
 
   function renderVolume(a) {
-    var bars = $("volume-bars");
+    var canvas = $("volume-chart");
     var empty = $("volume-empty");
-    var perDay = a.per_day || {};
-    var days = Object.keys(perDay);
+    if (volumeChart) { volumeChart.destroy(); volumeChart = null; }
+
+    // per_day_status: { "2026-09-20": { SUBMITTED: n, VERIFIED: n, _uploaded: n } }
+    var perDayStatus = a.per_day_status || {};
+    var days = Object.keys(perDayStatus).sort();
     if (days.length === 0) {
-      empty.textContent = "No verifications yet — submit your first document.";
-      return;
+      var perDay = a.per_day || {};
+      days = Object.keys(perDay).sort();
+      if (days.length === 0) {
+        empty.textContent = "No verifications yet — submit your first document.";
+        return;
+      }
     }
-    var max = Math.max(1, ...days.map(function (d) { return Number(perDay[d]) || 0; }));
-    days.forEach(function (day) {
-      var n = Number(perDay[day]) || 0;
-      var bar = document.createElement("div");
-      bar.className = "bar";
-      bar.style.height = Math.max(5, Math.round((n / max) * 100)) + "%";
-      bar.title = day + ": " + n;
-      bars.appendChild(bar);
+    empty.textContent = "";
+
+    var uploaded = days.map(function (d) {
+      var b = perDayStatus[d] || {};
+      return b._uploaded != null ? Number(b._uploaded) : Number(a.per_day ? a.per_day[d] : b[d]) || 0;
+    });
+    var verified = days.map(function (d) {
+      var b = perDayStatus[d] || {};
+      return Number(b.VERIFIED) || 0;
+    });
+
+    var labels = days.map(function (d) {
+      var m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + "/" + m[2] : d;
+    });
+
+    volumeChart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Uploaded",
+            data: uploaded,
+            borderColor: BRAND,
+            backgroundColor: "rgba(124, 58, 237, 0.10)",
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: BRAND,
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            borderWidth: 2,
+          },
+          {
+            label: "Verified",
+            data: verified,
+            borderColor: "#059669",
+            backgroundColor: "rgba(5, 150, 105, 0.08)",
+            fill: false,
+            tension: 0.35,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#059669",
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: "#4b5563", usePointStyle: true, boxWidth: 8, padding: 14, font: { size: 12 } },
+          },
+          tooltip: {
+            callbacks: {
+              title: function (items) { return labels[items[0].dataIndex]; },
+              label: function (item) { return " " + item.dataset.label + ": " + item.parsed.x; },
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: "#9ca3af", font: { size: 11 } },
+            grid: { color: "#f3f4f6" },
+            title: { display: true, text: "Documents", color: "#6b7280", font: { size: 11 } },
+          },
+          y: {
+            ticks: { color: "#9ca3af", font: { size: 11 } },
+            grid: { display: false },
+            title: { display: true, text: "Day", color: "#6b7280", font: { size: 11 } },
+          },
+        },
+      },
     });
   }
 
   function renderOutcomes(a) {
-    var list = $("outcome-list");
+    var canvas = $("outcome-chart");
+    var empty = $("outcome-empty");
+    if (outcomeChart) { outcomeChart.destroy(); outcomeChart = null; }
+
     var by = a.by_status || {};
     var keys = Object.keys(by);
     if (keys.length === 0) {
-      list.innerHTML = '<p class="text-sm text-muted">Nothing yet.</p>';
+      empty.style.display = "block";
+      empty.textContent = "Nothing yet.";
+      var ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    list.innerHTML = "";
-    keys.forEach(function (status) {
-      var row = document.createElement("div");
-      row.className = "flex items-center justify-between";
-      row.style.cssText = "margin-top:0.375rem";
-      row.innerHTML =
-        Verifo.statusBadge(status) +
-        '<span style="font-weight:600;color:var(--gray-700)">' + by[status] + "</span>";
-      list.appendChild(row);
+    empty.style.display = "none";
+    empty.textContent = "";
+
+    outcomeChart = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: keys,
+        datasets: [{
+          data: keys.map(function (k) { return by[k]; }),
+          backgroundColor: keys.map(function (k) { return STATUS_COLORS[k] || "#9ca3af"; }),
+          borderWidth: 2,
+          borderColor: "#ffffff",
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: "#4b5563", usePointStyle: true, boxWidth: 8, padding: 14, font: { size: 12 } },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (item) { return " " + item.label + ": " + item.parsed + " (" + Math.round(item.parsed / item.dataset.data.reduce(function (a, b) { return a + b; }, 0) * 100) + "%)"; },
+            },
+          },
+        },
+      },
     });
   }
 

@@ -5,9 +5,11 @@ transport- and provider-agnostic and never claims an external AI model.
 """
 from .concrete import (
     DemoVerificationEngine,
+    HybridOCR,
     IntegrityAnalyzerImpl,
     ReferenceComparatorImpl,
     ReferenceDatabaseVerifier,
+    ScanOCRAnalyzer,
     TextLayerOCR,
 )
 from .interfaces import (
@@ -28,7 +30,7 @@ from .signals import (
 
 
 def build_engine(config: dict | None = None, *, provider=None) -> VerificationEngine:
-    """Default deterministic engine: in-house OCR + reference + library + integrity.
+    """Default deterministic engine: hybrid OCR (text-layer + scan fallback).
 
     An optional AI ``provider`` (from :mod:`app.services.ai`) supplements
     extraction when available; it never replaces the local analyzers.
@@ -38,7 +40,7 @@ def build_engine(config: dict | None = None, *, provider=None) -> VerificationEn
 
         config = BaseConfig.default_verification_config()
     return DemoVerificationEngine(
-        ocr=TextLayerOCR(),
+        ocr=HybridOCR(),
         comparator=ReferenceComparatorImpl(),
         database=ReferenceDatabaseVerifier(),
         integrity=IntegrityAnalyzerImpl(),
@@ -53,12 +55,14 @@ __all__ = [
     "ExtractedField",
     "FieldMatch",
     "Finding",
+    "HybridOCR",
     "IntegrityAnalyzer",
     "IntegrityAnalyzerImpl",
     "OCRAnalyzer",
     "ReferenceComparator",
     "ReferenceComparatorImpl",
     "ReferenceDatabaseVerifier",
+    "ScanOCRAnalyzer",
     "ScoreBreakdown",
     "ScoreCalculator",
     "TextLayerOCR",

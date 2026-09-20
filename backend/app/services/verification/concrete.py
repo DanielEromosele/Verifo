@@ -22,6 +22,15 @@ from .interfaces import (
 from .scoring import ScoreCalculator
 from .signals import ExtractedField, FieldMatch, Finding, ScoreBreakdown, VerificationReport
 
+
+def _get_rapid_ocr():
+    """Lazy-load RapidOCR; returns None if not available (deploy-time dep)."""
+    try:
+        from rapidocr_onnxruntime import RapidOCR
+        return RapidOCR()
+    except Exception:
+        return None
+
 _LABEL_KEYS = {
     "name": ("full_name", "student_name"),
     "full name": ("full_name",),
@@ -115,6 +124,121 @@ class TextLayerOCR(OCRAnalyzer):
             if m:
                 out.append(ExtractedField(key=key, value=m.group(0).strip(),
                                           confidence=0.6, source="ocr"))
+        return out
+
+
+class HybridOCR(OCRAnalyzer):
+    """Hybrid OCR: text-layer first; falls back to scan OCR if text density is low."""
+
+    def __init__(self):
+        self._text_layer = TextLayerOCR()
+        self._scan = ScanOCRAnalyzer()
+
+    def extract(self, asset_path: str) -> list[ExtractedField]:
+        # Try text layer first
+        fields = self._text_layer.extract(asset_path)
+        doc_text_field = next((f for f in fields if f.key == "doc_text"), None)
+        text_len = len(doc_text_field.value) if doc_text_field else 0
+
+        # If text layer has substantial content, use it
+        if text_len > 200:
+            return fields
+
+        # Low text density -> likely a scan; try scan OCR if available
+        if self._scan.available():
+            scan_fields = self._scan.extract(asset_path)
+            scan_text = next((f for f in scan_fields if f.key == "doc_text"), None)
+            if scan_text and len(scan_text.value) > text_len:
+                # Annotate that scan OCR was used
+                for f in scan_fields:
+                    if f.source == "ocr":
+                        f.source = "ocr-scan"
+                return scan_fields
+
+        # Return text-layer result (may be sparse)
+        return fields
+
+
+class ScanOCRAnalyzer(OCRAnalyzer):
+    """OCR for scanned/image-based PDFs using RapidOCR (deploy-time dep).
+
+    Falls back gracefully if RapidOCR is not installed.
+    """
+
+    def __init__(self):
+        self._engine = _get_rapid_ocr()
+
+    def available(self) -> bool:
+        return self._engine is not None
+
+    def extract(self, asset_path: str) -> list[ExtractedField]:
+        if not self.available():
+            return [ExtractedField(key="doc_text", value="", confidence=0.0,
+                                   source="ocr", raw="RapidOCR not installed")]
+
+        import fitz
+        from PIL import Image
+        import io
+
+        fields: list[ExtractedField] = []
+        full_text_parts = []
+
+        try:
+            with fitz.open(asset_path) as doc:
+                for page_num, page in enumerate(doc):
+                    # Render page to image at 300 DPI for good OCR
+                    pix = page.get_pixmap(dpi=300)
+                    img = Image.open(io.BytesIO(pix.tobytes("png")))
+
+                    # Run OCR
+                    result, _ = self._engine(img)
+                    if result:
+                        page_text = "\n".join([line[1] for line in result])
+                        full_text_parts.append(page_text)
+        except Exception as exc:
+            return [ExtractedField(key="doc_text", value="", confidence=0.0,
+                                   source="ocr", raw=f"Scan OCR failed: {exc}")]
+
+        full_text = "\n\n".join(full_text_parts)
+        if not full_text.strip():
+            return [ExtractedField(key="doc_text", value="", confidence=0.0,
+                                   source="ocr", raw="No text recognized from scan")]
+
+        # Same structured extraction as TextLayerOCR
+        fields.append(ExtractedField(key="doc_text", value=full_text.strip()[:4000],
+                                     confidence=0.8, source="ocr", raw=full_text[:500]))
+        fields.append(ExtractedField(key="doc_hash", value=sha256_hex(full_text.encode()),
+                                     confidence=1.0, source="ocr"))
+
+        structured = self._structured_fields(full_text)
+        fields.extend(structured)
+        return fields
+
+    @staticmethod
+    def _structured_fields(text: str) -> list[ExtractedField]:
+        # Reuse the same logic from TextLayerOCR
+        out: list[ExtractedField] = []
+        seen: dict[str, str] = {}
+
+        for m in re.finditer(r"([A-Za-z][A-Za-z ./_()\-]{2,40}):\s*(.{2,120})", text):
+            label, value = m.group(1), m.group(2).strip()
+            label = _clean_label(label)
+            for token, keys in _LABEL_KEYS.items():
+                if token in label:
+                    key = keys[0]
+                    if key not in seen:
+                        seen[key] = value
+                        out.append(ExtractedField(key=key, value=value,
+                                                  confidence=0.75, source="ocr"))
+                    break
+
+        for key, pat in _VALUE_PATTERNS.items():
+            if key in seen:
+                continue
+            m = pat.search(text)
+            if m:
+                out.append(ExtractedField(key=key, value=m.group(0).strip(),
+                                          confidence=0.55, source="ocr"))
         return out
 
 

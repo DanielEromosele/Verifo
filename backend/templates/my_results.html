@@ -1,0 +1,45 @@
+{% extends "app.html" %}
+{% block title %}My Results — Verifo{% endblock %}
+{% block section %}my-results{% endblock %}
+{% block app %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">My submissions</p>
+    <h1>Verification results</h1>
+    <p class="subtitle">Status and outcomes for documents you submitted.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div><h2>All submissions</h2><p id="results-count">Loading…</p></div>
+  </div>
+  <div class="table-wrap">
+    <table class="v-table">
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Status</th>
+          <th>Score</th>
+          <th>Decision</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody id="results-rows"></tbody>
+    </table>
+  </div>
+  <p id="results-empty" class="text-sm text-muted" style="padding:1.25rem;display:none"></p>
+</div>
+
+<div id="detail-modal" class="modal" style="display:none">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">Verification details</h2>
+      <button type="button" class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/my_results.js"></script>{% endblock %}
