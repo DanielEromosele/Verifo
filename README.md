@@ -1,4 +1,4 @@
-# Verifo
+# ClearFlow
 
 **Issuer-first AI-powered document verification and bulk screening platform.**
 
